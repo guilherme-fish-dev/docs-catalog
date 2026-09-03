@@ -215,12 +215,15 @@
                 return;
             }
             var projects = storageApi.getProjects();
-            var alreadyExists = projects.some(function (p) { return p.id === payload.project.id; });
-            if (!alreadyExists) {
-                storageApi.createProject(payload.project.label || payload.project.id, payload.project.id);
+            var existingProject = projects.filter(function (p) { return p.id === payload.project.id; })[0];
+            var actualProjectId;
+            if (existingProject) {
+                actualProjectId = existingProject.id;
+            } else {
+                actualProjectId = storageApi.createProject(payload.project.label || payload.project.id, payload.project.id).id;
             }
             var merge = window.confirm("Mesclar com os documentos existentes do projeto?\nOK = mesclar (mantem os locais em caso de conflito de id)\nCancelar = substituir tudo pelo arquivo importado");
-            var existingDocs = storageApi.getDocs(payload.project.id);
+            var existingDocs = storageApi.getDocs(actualProjectId);
             var result;
             try {
                 result = applyImport(existingDocs, payload, merge ? "merge" : "replace");
@@ -228,12 +231,12 @@
                 window.alert("Nao foi possivel importar: " + err.message);
                 return;
             }
-            storageApi.saveDocs(payload.project.id, result.docs);
+            storageApi.saveDocs(actualProjectId, result.docs);
             if (result.conflicts.length) {
                 window.alert(result.conflicts.length + " documento(s) ignorado(s) por conflito de id: " + result.conflicts.join(", "));
             }
             renderProjectSelect();
-            switchToProject(payload.project.id);
+            switchToProject(actualProjectId);
         };
         reader.readAsText(file);
     }
