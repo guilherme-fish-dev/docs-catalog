@@ -9,3 +9,6 @@ Thumbs.db
 
 # Local worktrees
 .worktrees/
+
+# Brainstorming visual companion sessions
+.superpowers/
