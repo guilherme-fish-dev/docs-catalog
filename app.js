@@ -78,14 +78,14 @@
 
     function rebuildIndex() {
         var docs = state.activeProjectId ? storageApi.getDocs(state.activeProjectId) : [];
-        docs = docs.filter(function (d) { return !d.archived; });
+        if (!state.includeArchived) { docs = docs.filter(function (d) { return !d.archived; }); }
         enriched = docs.map(enrich);
         themes = Array.from(new Set(enriched.map(function (d) { return d.theme; }))).sort(function (a, b) { return a.localeCompare(b, "pt-BR"); });
         tags = Array.from(new Set(enriched.reduce(function (acc, d) { return acc.concat(d.tags); }, []))).sort(function (a, b) { return a.localeCompare(b, "pt-BR"); });
     }
 
     // State
-    var state = { query: "", selectedTheme: null, selectedTags: new Set(), activeProjectId: null };
+    var state = { query: "", selectedTheme: null, selectedTags: new Set(), activeProjectId: null, includeArchived: false };
 
     // Elements
     var el = {
@@ -122,7 +122,8 @@
         themesDatalist: document.getElementById("themes-datalist"),
         formError: document.getElementById("form-error"),
         modalTitle: document.getElementById("modal-title"),
-        formSubmit: document.querySelector("#doc-form button[type=\"submit\"]")
+        formSubmit: document.querySelector("#doc-form button[type=\"submit\"]"),
+        includeArchived: document.getElementById("include-archived")
     };
 
     // Project registry UI
@@ -318,7 +319,7 @@
         article.innerHTML = [
             '<div class="card-head">',
             '  <div><p class="eyebrow">' + escapeHtml(doc.theme) + '</p><h3 class="card-title">' + escapeHtml(doc.title) + '</h3></div>',
-            '  <div class="card-badges"><span class="score-badge">Relevancia ' + Math.max(doc.score, 0).toFixed(2) + '</span></div>',
+            '  <div class="card-badges"><span class="score-badge">Relevancia ' + Math.max(doc.score, 0).toFixed(2) + '</span>' + (doc.archived ? '<span class="score-badge">Arquivado</span>' : "") + '</div>',
             '</div>',
             '<p class="doc-summary">' + escapeHtml(doc.summary) + '</p>',
             '<div class="doc-meta"><div class="meta-line"><span class="meta-label">Tema</span><strong>' + escapeHtml(doc.theme) + '</strong></div></div>',
@@ -359,8 +360,8 @@
     }
 
     function resetFilters(skipRender) {
-        state.query = ""; state.selectedTheme = null; state.selectedTags.clear();
-        el.searchInput.value = "";
+        state.query = ""; state.selectedTheme = null; state.selectedTags.clear(); state.includeArchived = false;
+        el.searchInput.value = ""; el.includeArchived.checked = false;
         if (!skipRender) render();
     }
 
@@ -509,7 +510,8 @@
     });
     el.clearTheme.addEventListener("click", function () { state.selectedTheme = null; render(); });
     el.clearTags.addEventListener("click", function () { state.selectedTags.clear(); render(); });
-    el.resetFilters.addEventListener("click", function () { resetFilters(false); });
+    el.includeArchived.addEventListener("change", function (e) { state.includeArchived = e.target.checked; rebuildIndex(); render(); });
+    el.resetFilters.addEventListener("click", function () { resetFilters(true); rebuildIndex(); render(); });
     el.btnNewDoc.addEventListener("click", openModal);
     el.modalClose.addEventListener("click", closeModal);
     el.formCancel.addEventListener("click", closeModal);
