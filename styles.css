@@ -1,18 +1,18 @@
 :root {
-    --bg: #f4efe7;
-    --bg-accent: #e7ded2;
-    --surface: rgba(255, 251, 245, 0.84);
-    --surface-strong: #fffaf3;
-    --text: #1d1b18;
-    --muted: #655c52;
-    --line: rgba(29, 27, 24, 0.12);
-    --primary: #17624a;
-    --primary-strong: #0c4835;
-    --accent: #d97532;
-    --shadow: 0 24px 60px rgba(53, 40, 22, 0.08);
-    --radius-lg: 24px;
-    --radius-md: 18px;
-    --radius-sm: 999px;
+    --bg: #150b18;
+    --surface: #1e0f22;
+    --surface-raised: #241129;
+    --border: #3a2240;
+    --accent: #f4d35e;
+    --text: #f3e9ee;
+    --muted: #c9a8d1;
+    --danger: #ff6a6a;
+    --danger-bg: rgba(255, 106, 106, 0.14);
+    --shadow-sm: 4px 4px 0 var(--accent);
+    --shadow-md: 6px 6px 0 var(--accent);
+    --border-w: 2px;
+    --border-w-thick: 3px;
+    --radius: 4px;
 }
 
 * {
@@ -26,22 +26,9 @@ html {
 body {
     margin: 0;
     min-height: 100vh;
-    font-family: "IBM Plex Sans", sans-serif;
+    font-family: "Inter", sans-serif;
     color: var(--text);
-    background:
-        radial-gradient(circle at top left, rgba(217, 117, 50, 0.18), transparent 28%),
-        radial-gradient(circle at top right, rgba(23, 98, 74, 0.16), transparent 22%),
-        linear-gradient(180deg, #f8f3eb 0%, var(--bg) 100%);
-}
-
-body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    background-image: linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
-    background-size: 28px 28px;
-    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.35), transparent 70%);
+    background: var(--bg);
 }
 
 .page-shell {
