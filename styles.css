@@ -349,20 +349,6 @@ h1 {
     flex-shrink: 0;
 }
 
-.local-badge {
-    padding: 6px 10px;
-    border-radius: var(--radius-sm);
-    background: rgba(217, 117, 50, 0.18);
-    color: #8f4817;
-    font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-}
-
-.doc-card.is-local {
-    border-color: rgba(217, 117, 50, 0.22);
-}
-
 /* ── Danger / delete button ───────────────────────────────────────────────── */
 
 .danger-button {
@@ -381,6 +367,50 @@ h1 {
 .danger-button:hover {
     background: rgba(185, 28, 28, 0.18);
     transform: translateY(-1px);
+}
+
+/* ── Project bar ──────────────────────────────────────────────────────────── */
+
+.project-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.project-bar-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.project-bar-field label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.project-bar-field select {
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(29, 27, 24, 0.2);
+    background: var(--surface-strong);
+    font: inherit;
+    color: var(--text);
+}
+
+.project-bar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.project-bar-divider {
+    width: 1px;
+    align-self: stretch;
+    background: var(--line);
 }
 
 /* ── FAB button ───────────────────────────────────────────────────────────── */
@@ -475,34 +505,6 @@ h1 {
 .icon-button:hover {
     background: rgba(0, 0, 0, 0.07);
     color: var(--text);
-}
-
-/* ── Tabs ─────────────────────────────────────────────────────────────────── */
-
-.modal-tabs {
-    display: flex;
-    gap: 4px;
-    padding: 16px 24px 0;
-    border-bottom: 1px solid var(--line);
-}
-
-.tab-btn {
-    appearance: none;
-    border: 0;
-    background: transparent;
-    padding: 10px 16px;
-    color: var(--muted);
-    font: inherit;
-    font-weight: 500;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -1px;
-    transition: color 140ms ease, border-color 140ms ease;
-}
-
-.tab-btn.is-active {
-    color: var(--primary);
-    border-bottom-color: var(--primary);
 }
 
 .tab-content {
@@ -637,47 +639,6 @@ h1 {
     flex-wrap: wrap;
 }
 
-/* ── Export tab ───────────────────────────────────────────────────────────── */
-
-.export-instruction {
-    color: var(--muted);
-    line-height: 1.65;
-    margin: 0 0 16px;
-    font-size: 0.95rem;
-}
-
-.export-instruction code {
-    background: rgba(0, 0, 0, 0.06);
-    padding: 2px 6px;
-    border-radius: 6px;
-    font-size: 0.92rem;
-}
-
-.code-block-wrap {
-    position: relative;
-}
-
-.copy-btn {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-}
-
-.code-block {
-    display: block;
-    padding: 16px;
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    background: #f4efe7;
-    font-family: "IBM Plex Mono", "Courier New", monospace;
-    font-size: 0.86rem;
-    line-height: 1.55;
-    overflow-x: auto;
-    white-space: pre;
-    margin: 0;
-    color: var(--text);
-}
-
 /* ── Prevent scroll when modal open ──────────────────────────────────────── */
 
 body.modal-open {
@@ -699,6 +660,15 @@ body.modal-open {
 @media (max-width: 640px) {
     .page-shell {
         padding: 18px 14px 60px;
+    }
+
+    .project-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .project-bar-actions {
+        justify-content: flex-start;
     }
 
     .hero,

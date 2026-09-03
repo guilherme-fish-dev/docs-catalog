@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Glossario de Documentos</title>
+    <title>Catalogo de Documentos</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -13,12 +13,28 @@
     <div class="page-shell">
         <header class="hero">
             <p class="eyebrow">Portal interno</p>
-            <h1>Glossario de documentos</h1>
+            <h1>Catalogo de documentos</h1>
             <p class="hero-copy">
                 Navegue por tema, filtre por tags e pesquise por termos relacionados. A busca usa texto,
                 sinonimos e um ranking vetorial leve para ordenar melhor os resultados.
             </p>
         </header>
+
+        <section class="project-bar panel" aria-label="Selecao de projeto">
+            <div class="project-bar-field">
+                <label for="project-select">Projeto</label>
+                <select id="project-select"></select>
+            </div>
+            <div class="project-bar-actions">
+                <button id="btn-new-project" class="secondary-button" type="button">+ Novo projeto</button>
+                <button id="btn-rename-project" class="ghost-button" type="button">Renomear</button>
+                <button id="btn-remove-project" class="danger-button" type="button">Remover</button>
+                <span class="project-bar-divider" aria-hidden="true"></span>
+                <button id="btn-export-project" class="secondary-button" type="button">Exportar JSON</button>
+                <button id="btn-import-project" class="secondary-button" type="button">Importar JSON</button>
+                <input id="import-file-input" type="file" accept="application/json" hidden>
+            </div>
+        </section>
 
         <main class="layout">
             <aside class="sidebar" aria-label="Filtros de navegacao">
@@ -73,11 +89,6 @@
                 <button id="modal-close" class="icon-button" type="button" aria-label="Fechar">&#x2715;</button>
             </div>
 
-            <div class="modal-tabs" role="tablist">
-                <button class="tab-btn is-active" data-tab="form" type="button" role="tab">Formulario</button>
-                <button class="tab-btn" data-tab="export" type="button" role="tab">Exportar JSON</button>
-            </div>
-
             <div id="tab-form" class="tab-content">
                 <form id="doc-form" novalidate autocomplete="off">
                     <div class="form-field">
@@ -125,20 +136,12 @@
                     </div>
                 </form>
             </div>
-
-            <div id="tab-export" class="tab-content" hidden>
-                <p class="export-instruction">
-                    Documento salvo localmente. Para fixar permanentemente, copie o objeto abaixo e adicione ao array em
-                    <code>documents.js</code>.
-                </p>
-                <div class="code-block-wrap">
-                    <button id="btn-copy-json" class="secondary-button copy-btn" type="button">Copiar</button>
-                    <pre id="export-code" class="code-block"></pre>
-                </div>
-            </div>
         </div>
     </div>
 
+    <script src="./js/storage.js"></script>
+    <script src="./js/importExport.js"></script>
+    <script src="./projects.config.js"></script>
     <script src="./documents.js"></script>
     <script src="./app.js"></script>
 </body>
