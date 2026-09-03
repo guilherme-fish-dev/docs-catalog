@@ -119,7 +119,9 @@
         synonymsChipBox: document.getElementById("synonyms-chip-box"),
         fSynonymsInput: document.getElementById("f-synonyms-input"),
         themesDatalist: document.getElementById("themes-datalist"),
-        formError: document.getElementById("form-error")
+        formError: document.getElementById("form-error"),
+        modalTitle: document.getElementById("modal-title"),
+        formSubmit: document.querySelector("#doc-form button[type=\"submit\"]")
     };
 
     // Project registry UI
@@ -320,8 +322,9 @@
             '<p class="doc-summary">' + escapeHtml(doc.summary) + '</p>',
             '<div class="doc-meta"><div class="meta-line"><span class="meta-label">Tema</span><strong>' + escapeHtml(doc.theme) + '</strong></div></div>',
             '<div class="tag-row">' + tagsMarkup + '</div>',
-            '<div class="doc-actions">' + linkMarkup + ' <button class="danger-button delete-btn" type="button" data-id="' + escapeHtml(doc.id) + '">Remover</button></div>'
+            '<div class="doc-actions">' + linkMarkup + ' <button class="secondary-button edit-btn" type="button" data-id="' + escapeHtml(doc.id) + '">Editar</button> <button class="danger-button delete-btn" type="button" data-id="' + escapeHtml(doc.id) + '">Remover</button></div>'
         ].join("\n");
+        article.querySelector(".edit-btn").addEventListener("click", function () { openEditModal(doc); });
         article.querySelector(".delete-btn").addEventListener("click", function () { deleteDocument(doc.id); });
         return article;
     }
@@ -370,9 +373,15 @@
         rebuildIndex(); render();
     }
 
-    // Modal (cadastro de documento)
+    // Modal (cadastro/edicao de documento)
     var formTags = new Set();
     var formSynonyms = new Set();
+    var editingDocId = null;
+
+    function setModalMode(isEditing) {
+        el.modalTitle.textContent = isEditing ? "Editar documento" : "Cadastrar documento";
+        el.formSubmit.textContent = isEditing ? "Salvar alteracoes" : "Salvar documento";
+    }
 
     function openModal() {
         if (!state.activeProjectId) return;
@@ -380,6 +389,25 @@
         document.body.classList.add("modal-open");
         el.themesDatalist.innerHTML = themes.map(function (t) { return '<option value="' + escapeHtml(t) + '">'; }).join("");
         resetForm();
+        setTimeout(function () { el.fTitle.focus(); }, 50);
+    }
+
+    function openEditModal(doc) {
+        if (!state.activeProjectId) return;
+        el.modalOverlay.hidden = false;
+        document.body.classList.add("modal-open");
+        el.themesDatalist.innerHTML = themes.map(function (t) { return '<option value="' + escapeHtml(t) + '">'; }).join("");
+        resetForm();
+        editingDocId = doc.id;
+        el.fTitle.value = doc.title;
+        el.fTheme.value = doc.theme;
+        el.fSummary.value = doc.summary;
+        el.fUrl.value = doc.sourceUrl;
+        (doc.tags || []).forEach(function (t) { formTags.add(t); });
+        (doc.synonyms || []).forEach(function (s) { formSynonyms.add(s); });
+        renderChips(el.tagsChipBox, el.fTagsInput, formTags);
+        renderChips(el.synonymsChipBox, el.fSynonymsInput, formSynonyms);
+        setModalMode(true);
         setTimeout(function () { el.fTitle.focus(); }, 50);
     }
 
@@ -395,6 +423,8 @@
         renderChips(el.tagsChipBox, el.fTagsInput, formTags);
         renderChips(el.synonymsChipBox, el.fSynonymsInput, formSynonyms);
         el.formError.hidden = true; el.formError.textContent = "";
+        editingDocId = null;
+        setModalMode(false);
     }
 
     // Chip inputs
