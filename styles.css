@@ -98,11 +98,10 @@ h1 {
 
 .panel,
 .doc-card {
-    border: 1px solid var(--line);
-    border-radius: var(--radius-md);
+    border: var(--border-w) solid var(--border);
+    border-radius: var(--radius);
     background: var(--surface);
-    backdrop-filter: blur(14px);
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-sm);
 }
 
 .panel {
@@ -125,10 +124,11 @@ h1 {
 .search-box {
     display: flex;
     align-items: center;
-    border: 1px solid rgba(23, 98, 74, 0.16);
-    border-radius: 18px;
-    background: var(--surface-strong);
+    border: var(--border-w) solid var(--accent);
+    border-radius: var(--radius);
+    background: var(--surface-raised);
     padding: 6px;
+    box-shadow: var(--shadow-sm);
 }
 
 .search-box input {
@@ -138,11 +138,12 @@ h1 {
     background: transparent;
     padding: 12px 14px;
     font: inherit;
+    font-family: "JetBrains Mono", monospace;
     color: var(--text);
 }
 
 .search-box input::placeholder {
-    color: #8d8174;
+    color: var(--muted);
 }
 
 .search-hint {
