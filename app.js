@@ -33,11 +33,17 @@
     }
 
     function enrich(doc) {
-        return Object.assign({}, doc, {
-            normalizedTheme: normalizeText(doc.theme),
-            normalizedTags: doc.tags.map(normalizeText),
-            searchableText: normalizeText([doc.title, doc.theme, doc.tags.join(" "), doc.summary, (doc.synonyms || []).join(" ")].join(" ")),
-            weightedBag: buildWeightedBag(doc)
+        var tags = Array.isArray(doc.tags) ? doc.tags : [];
+        var synonyms = Array.isArray(doc.synonyms) ? doc.synonyms : [];
+        var title = String(doc.title || "");
+        var theme = String(doc.theme || "");
+        var summary = String(doc.summary || "");
+        var safeDoc = Object.assign({}, doc, { tags: tags, synonyms: synonyms, title: title, theme: theme, summary: summary });
+        return Object.assign({}, safeDoc, {
+            normalizedTheme: normalizeText(theme),
+            normalizedTags: tags.map(normalizeText),
+            searchableText: normalizeText([title, theme, tags.join(" "), summary, synonyms.join(" ")].join(" ")),
+            weightedBag: buildWeightedBag(safeDoc)
         });
     }
 
@@ -235,6 +241,9 @@
             if (result.conflicts.length) {
                 window.alert(result.conflicts.length + " documento(s) ignorado(s) por conflito de id: " + result.conflicts.join(", "));
             }
+            if (result.rejected && result.rejected.length) {
+                window.alert(result.rejected.length + " documento(s) invalido(s) ignorado(s) na importacao.");
+            }
             renderProjectSelect();
             switchToProject(actualProjectId);
         };
@@ -293,10 +302,16 @@
         return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
 
+    var SAFE_URL_SCHEME = /^(https?|mailto|file):/i;
+
     function createCard(doc) {
         var article = document.createElement("article");
         article.className = "doc-card";
         var tagsMarkup = doc.tags.map(function (t) { return '<span class="tag-pill">' + escapeHtml(t) + '</span>'; }).join("");
+        var sourceUrl = String(doc.sourceUrl || "");
+        var linkMarkup = SAFE_URL_SCHEME.test(sourceUrl)
+            ? '<a class="primary-link" href="' + escapeHtml(sourceUrl) + '" target="_blank" rel="noreferrer">Abrir documento</a>'
+            : '<span class="primary-link">' + escapeHtml(sourceUrl) + '</span>';
         article.innerHTML = [
             '<div class="card-head">',
             '  <div><p class="eyebrow">' + escapeHtml(doc.theme) + '</p><h3 class="card-title">' + escapeHtml(doc.title) + '</h3></div>',
@@ -305,7 +320,7 @@
             '<p class="doc-summary">' + escapeHtml(doc.summary) + '</p>',
             '<div class="doc-meta"><div class="meta-line"><span class="meta-label">Tema</span><strong>' + escapeHtml(doc.theme) + '</strong></div></div>',
             '<div class="tag-row">' + tagsMarkup + '</div>',
-            '<div class="doc-actions"><a class="primary-link" href="' + escapeHtml(doc.sourceUrl) + '" target="_blank" rel="noreferrer">Abrir documento</a> <button class="danger-button delete-btn" type="button" data-id="' + escapeHtml(doc.id) + '">Remover</button></div>'
+            '<div class="doc-actions">' + linkMarkup + ' <button class="danger-button delete-btn" type="button" data-id="' + escapeHtml(doc.id) + '">Remover</button></div>'
         ].join("\n");
         article.querySelector(".delete-btn").addEventListener("click", function () { deleteDocument(doc.id); });
         return article;
@@ -464,7 +479,38 @@
     el.importFileInput.addEventListener("change", handleImportFileSelected);
 
     // Init
-    storageApi.ensureSeeded(window.PROJECTS_SEED || [], window.LEGACY_SEED_DOCUMENTS || []);
+    var OLD_USER_DOCS_KEY = "glossary_user_documents";
+
+    function readLegacyUserDocuments() {
+        var raw;
+        try {
+            raw = window.localStorage.getItem(OLD_USER_DOCS_KEY);
+        } catch (e) {
+            return [];
+        }
+        if (!raw) return [];
+        var parsed;
+        try {
+            parsed = JSON.parse(raw);
+        } catch (e) {
+            return [];
+        }
+        if (!Array.isArray(parsed)) return [];
+        return parsed.map(function (doc) {
+            var copy = Object.assign({}, doc);
+            delete copy._source;
+            return copy;
+        });
+    }
+
+    var legacyUserDocs = readLegacyUserDocuments();
+    var legacySeedDocuments = (window.LEGACY_SEED_DOCUMENTS || []).concat(legacyUserDocs);
+    storageApi.ensureSeeded(window.PROJECTS_SEED || [], legacySeedDocuments);
+    try {
+        window.localStorage.removeItem(OLD_USER_DOCS_KEY);
+    } catch (e) {
+        // ignore storage access errors
+    }
     state.activeProjectId = storageApi.getActiveProjectId();
     rebuildIndex();
     render();
