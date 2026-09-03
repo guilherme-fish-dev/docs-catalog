@@ -78,6 +78,7 @@
 
     function rebuildIndex() {
         var docs = state.activeProjectId ? storageApi.getDocs(state.activeProjectId) : [];
+        docs = docs.filter(function (d) { return !d.archived; });
         enriched = docs.map(enrich);
         themes = Array.from(new Set(enriched.map(function (d) { return d.theme; }))).sort(function (a, b) { return a.localeCompare(b, "pt-BR"); });
         tags = Array.from(new Set(enriched.reduce(function (acc, d) { return acc.concat(d.tags); }, []))).sort(function (a, b) { return a.localeCompare(b, "pt-BR"); });
@@ -322,9 +323,10 @@
             '<p class="doc-summary">' + escapeHtml(doc.summary) + '</p>',
             '<div class="doc-meta"><div class="meta-line"><span class="meta-label">Tema</span><strong>' + escapeHtml(doc.theme) + '</strong></div></div>',
             '<div class="tag-row">' + tagsMarkup + '</div>',
-            '<div class="doc-actions">' + linkMarkup + ' <button class="secondary-button edit-btn" type="button" data-id="' + escapeHtml(doc.id) + '">Editar</button> <button class="danger-button delete-btn" type="button" data-id="' + escapeHtml(doc.id) + '">Remover</button></div>'
+            '<div class="doc-actions">' + linkMarkup + ' <button class="secondary-button edit-btn" type="button" data-id="' + escapeHtml(doc.id) + '">Editar</button> <button class="secondary-button archive-btn" type="button" data-id="' + escapeHtml(doc.id) + '">' + (doc.archived ? "Desarquivar" : "Arquivar") + '</button> <button class="danger-button delete-btn" type="button" data-id="' + escapeHtml(doc.id) + '">Remover</button></div>'
         ].join("\n");
         article.querySelector(".edit-btn").addEventListener("click", function () { openEditModal(doc); });
+        article.querySelector(".archive-btn").addEventListener("click", function () { toggleArchived(doc.id); });
         article.querySelector(".delete-btn").addEventListener("click", function () { deleteDocument(doc.id); });
         return article;
     }
@@ -369,6 +371,16 @@
     // Delete doc
     function deleteDocument(id) {
         var docs = storageApi.getDocs(state.activeProjectId).filter(function (d) { return d.id !== id; });
+        storageApi.saveDocs(state.activeProjectId, docs);
+        rebuildIndex(); render();
+    }
+
+    // Archive doc
+    function toggleArchived(id) {
+        var docs = storageApi.getDocs(state.activeProjectId);
+        var doc = docs.filter(function (d) { return d.id === id; })[0];
+        if (!doc) return;
+        doc.archived = !doc.archived;
         storageApi.saveDocs(state.activeProjectId, docs);
         rebuildIndex(); render();
     }
@@ -479,11 +491,12 @@
         var docs = storageApi.getDocs(state.activeProjectId);
         if (editingDocId) {
             var index = docs.findIndex(function (d) { return d.id === editingDocId; });
-            var updatedDoc = { id: editingDocId, title: title, theme: theme, tags: tagsList, summary: summary, sourceUrl: sourceUrl, synonyms: synonymsList };
+            var previousArchived = index === -1 ? false : !!docs[index].archived;
+            var updatedDoc = { id: editingDocId, title: title, theme: theme, tags: tagsList, summary: summary, sourceUrl: sourceUrl, synonyms: synonymsList, archived: previousArchived };
             if (index === -1) { docs.push(updatedDoc); } else { docs[index] = updatedDoc; }
         } else {
             var id = slugify(title) + "-" + Date.now();
-            docs.push({ id: id, title: title, theme: theme, tags: tagsList, summary: summary, sourceUrl: sourceUrl, synonyms: synonymsList });
+            docs.push({ id: id, title: title, theme: theme, tags: tagsList, summary: summary, sourceUrl: sourceUrl, synonyms: synonymsList, archived: false });
         }
         storageApi.saveDocs(state.activeProjectId, docs);
         rebuildIndex(); render();
