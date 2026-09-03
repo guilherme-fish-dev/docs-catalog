@@ -727,7 +727,7 @@ body.modal-open {
     }
 
     .modal-panel {
-        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        border-radius: var(--radius) var(--radius) 0 0;
         min-height: 85vh;
         max-width: 100%;
         animation: slideUp 240ms cubic-bezier(0.22, 1, 0.36, 1);
