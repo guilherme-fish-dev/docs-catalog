@@ -561,21 +561,22 @@ h1 {
 .form-field input,
 .form-field textarea {
     width: 100%;
-    border: 1px solid rgba(29, 27, 24, 0.2);
-    border-radius: 14px;
-    background: var(--surface-strong);
+    border: var(--border-w) solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-raised);
     padding: 12px 14px;
     font: inherit;
     color: var(--text);
     outline: none;
-    transition: border-color 160ms ease;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
     box-sizing: border-box;
 }
 
 .form-field input:focus,
 .form-field textarea:focus,
 .chip-input-box:focus-within {
-    border-color: var(--primary);
+    border-color: var(--accent);
+    box-shadow: 3px 3px 0 var(--accent);
 }
 
 .form-field textarea {
@@ -597,12 +598,12 @@ h1 {
     flex-wrap: wrap;
     gap: 6px;
     align-items: center;
-    border: 1px solid rgba(29, 27, 24, 0.2);
-    border-radius: 14px;
-    background: var(--surface-strong);
+    border: var(--border-w) solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-raised);
     padding: 8px 10px;
     cursor: text;
-    transition: border-color 160ms ease;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
     min-height: 48px;
 }
 
@@ -624,11 +625,13 @@ h1 {
     align-items: center;
     gap: 6px;
     padding: 6px 10px;
-    border-radius: var(--radius-sm);
-    background: rgba(23, 98, 74, 0.12);
-    color: var(--primary-strong);
-    font-size: 0.88rem;
-    font-weight: 500;
+    border: var(--border-w) solid var(--accent);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--accent);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.82rem;
+    font-weight: 600;
 }
 
 .form-chip button {
@@ -652,9 +655,10 @@ h1 {
 
 .form-error {
     padding: 12px 16px;
-    border-radius: 12px;
-    background: rgba(185, 28, 28, 0.1);
-    color: #991b1b;
+    border: var(--border-w) solid var(--danger);
+    border-radius: var(--radius);
+    background: var(--danger-bg);
+    color: var(--danger);
     font-size: 0.93rem;
     margin-bottom: 20px;
 }
