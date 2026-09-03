@@ -1,3 +1,3 @@
 window.PROJECTS_SEED = [
-    { id: "cliente-exemplo", label: "ClienteExemplo" }
+    { id: "projeto-1", label: "Projeto 1" }
 ];
