@@ -452,19 +452,19 @@ h1 {
     align-items: center;
     gap: 8px;
     padding: 16px 22px;
-    border: 0;
-    border-radius: var(--radius-sm);
-    background: linear-gradient(135deg, var(--primary), var(--primary-strong));
-    color: #effcf7;
-    font: 600 1rem "IBM Plex Sans", sans-serif;
+    border: var(--border-w-thick) solid var(--text);
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: var(--bg);
+    font: 700 1rem "Inter", sans-serif;
     cursor: pointer;
-    box-shadow: 0 8px 28px rgba(12, 72, 53, 0.38);
+    box-shadow: 6px 6px 0 var(--text);
     transition: transform 160ms ease, box-shadow 160ms ease;
 }
 
 .fab:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 36px rgba(12, 72, 53, 0.46);
+    transform: translate(-2px, -2px);
+    box-shadow: 8px 8px 0 var(--text);
 }
 
 /* ── Modal overlay ────────────────────────────────────────────────────────── */
