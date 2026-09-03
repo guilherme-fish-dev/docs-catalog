@@ -36,12 +36,12 @@ run("createProject creates unique ids and empty docs", function () {
 run("createProject respects preferredId without clobbering existing docs", function () {
     var storage = makeMockStorage();
     var api = createStorageApi(storage);
-    var p = api.createProject("Projeto Importado", "quintoandar");
-    assert.strictEqual(p.id, "quintoandar");
-    api.saveDocs("quintoandar", [{ id: "d1" }]);
+    var p = api.createProject("Projeto Importado", "projeto-1");
+    assert.strictEqual(p.id, "projeto-1");
+    api.saveDocs("projeto-1", [{ id: "d1" }]);
     // creating again with same preferredId must not wipe existing docs
-    api.createProject("Projeto Importado", "quintoandar");
-    assert.deepStrictEqual(api.getDocs("quintoandar"), [{ id: "d1" }]);
+    api.createProject("Projeto Importado", "projeto-1");
+    assert.deepStrictEqual(api.getDocs("projeto-1"), [{ id: "d1" }]);
 });
 
 run("renameProject updates label without changing id or docs", function () {
@@ -80,20 +80,20 @@ run("docs are isolated per project", function () {
     assert.deepStrictEqual(api.getDocs(b.id), [{ id: "doc-b" }]);
 });
 
-run("ensureSeeded seeds projects and quintoandar docs once, then is idempotent", function () {
+run("ensureSeeded seeds projects and projeto-1 docs once, then is idempotent", function () {
     var api = createStorageApi(makeMockStorage());
-    var seedProjects = [{ id: "quintoandar", label: "QuintoAndar" }];
+    var seedProjects = [{ id: "projeto-1", label: "Projeto 1" }];
     var legacyDocs = [{ id: "doc-1", title: "Doc 1" }];
 
     api.ensureSeeded(seedProjects, legacyDocs);
     assert.deepStrictEqual(api.getProjects(), seedProjects);
-    assert.deepStrictEqual(api.getDocs("quintoandar"), legacyDocs);
-    assert.strictEqual(api.getActiveProjectId(), "quintoandar");
+    assert.deepStrictEqual(api.getDocs("projeto-1"), legacyDocs);
+    assert.strictEqual(api.getActiveProjectId(), "projeto-1");
 
     // user empties the project's docs, then a reload must not re-seed over that edit
-    api.saveDocs("quintoandar", []);
+    api.saveDocs("projeto-1", []);
     api.ensureSeeded(seedProjects, legacyDocs);
-    assert.deepStrictEqual(api.getDocs("quintoandar"), []);
+    assert.deepStrictEqual(api.getDocs("projeto-1"), []);
 });
 
 console.log("All storage tests passed.");

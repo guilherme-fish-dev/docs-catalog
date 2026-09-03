@@ -121,9 +121,10 @@
                 projects = seedProjects.map(function (p) { return { id: p.id, label: p.label }; });
                 saveProjects(projects);
             }
+            var legacyTargetId = seedProjects && seedProjects.length ? seedProjects[0].id : null;
             projects.forEach(function (p) {
                 if (storage.getItem(docsKey(p.id)) === null) {
-                    var seedDocs = p.id === "quintoandar" && legacySeedDocs ? legacySeedDocs : [];
+                    var seedDocs = p.id === legacyTargetId && legacySeedDocs ? legacySeedDocs : [];
                     saveDocs(p.id, seedDocs);
                 }
             });
