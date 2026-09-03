@@ -1,0 +1,8 @@
+# Dado real do cliente/projeto — nunca vai pro git
+documents.js
+*.local.json
+data/
+
+# OS / editor
+.DS_Store
+Thumbs.db

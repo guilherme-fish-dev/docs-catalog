@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glossario de Documentos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <div class="page-shell">
+        <header class="hero">
+            <p class="eyebrow">Portal interno</p>
+            <h1>Glossario de documentos</h1>
+            <p class="hero-copy">
+                Navegue por tema, filtre por tags e pesquise por termos relacionados. A busca usa texto,
+                sinonimos e um ranking vetorial leve para ordenar melhor os resultados.
+            </p>
+        </header>
+
+        <main class="layout">
+            <aside class="sidebar" aria-label="Filtros de navegacao">
+                <section class="panel sticky-panel">
+                    <label class="search-label" for="search-input">Buscar por tema, tag ou descricao</label>
+                    <div class="search-box">
+                        <input id="search-input" type="search" placeholder="Ex.: nomeclatura, metadata, padrao" autocomplete="off">
+                    </div>
+                    <p class="search-hint" id="search-hint">Digite para filtrar e ranquear os resultados.</p>
+                </section>
+
+                <section class="panel">
+                    <div class="section-head">
+                        <h2>Temas</h2>
+                        <button id="clear-theme" class="ghost-button" type="button">Limpar</button>
+                    </div>
+                    <div id="theme-list" class="chip-list"></div>
+                </section>
+
+                <section class="panel">
+                    <div class="section-head">
+                        <h2>Tags</h2>
+                        <button id="clear-tags" class="ghost-button" type="button">Limpar</button>
+                    </div>
+                    <div id="tag-list" class="chip-list"></div>
+                </section>
+            </aside>
+
+            <section class="content">
+                <div class="content-topbar panel">
+                    <div>
+                        <p class="results-label">Resultados</p>
+                        <strong id="results-count">0 documentos</strong>
+                    </div>
+                    <button id="reset-filters" class="secondary-button" type="button">Resetar filtros</button>
+                </div>
+
+                <div id="active-filters" class="active-filters"></div>
+                <div id="results" class="card-grid" aria-live="polite"></div>
+            </section>
+        </main>
+    </div>
+
+    <button id="btn-new-doc" class="fab" type="button" aria-label="Cadastrar novo documento">
+        <span aria-hidden="true">+</span> Cadastrar
+    </button>
+
+    <div id="modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title" hidden>
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h2 id="modal-title" class="modal-title">Cadastrar documento</h2>
+                <button id="modal-close" class="icon-button" type="button" aria-label="Fechar">&#x2715;</button>
+            </div>
+
+            <div class="modal-tabs" role="tablist">
+                <button class="tab-btn is-active" data-tab="form" type="button" role="tab">Formulario</button>
+                <button class="tab-btn" data-tab="export" type="button" role="tab">Exportar JSON</button>
+            </div>
+
+            <div id="tab-form" class="tab-content">
+                <form id="doc-form" novalidate autocomplete="off">
+                    <div class="form-field">
+                        <label for="f-title">Titulo *</label>
+                        <input id="f-title" type="text" required placeholder="Nome descritivo do documento">
+                    </div>
+
+                    <div class="form-field">
+                        <label for="f-theme">Tema *</label>
+                        <input id="f-theme" type="text" required list="themes-datalist" placeholder="Ex.: Padroes, Fluxos, Contratos">
+                        <datalist id="themes-datalist"></datalist>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="f-tags-input">Tags *</label>
+                        <div class="chip-input-box" id="tags-chip-box">
+                            <input id="f-tags-input" type="text" placeholder="Digite e pressione Enter ou virgula">
+                        </div>
+                        <p class="field-hint">Pressione Enter ou virgula para adicionar cada tag.</p>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="f-summary">Resumo *</label>
+                        <textarea id="f-summary" rows="3" required placeholder="Breve descricao do que este documento cobre"></textarea>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="f-url">Link do documento *</label>
+                        <input id="f-url" type="url" required placeholder="https://...">
+                    </div>
+
+                    <div class="form-field">
+                        <label for="f-synonyms-input">Sinonimos <span class="optional-label">(opcional)</span></label>
+                        <div class="chip-input-box" id="synonyms-chip-box">
+                            <input id="f-synonyms-input" type="text" placeholder="Digite e pressione Enter ou virgula">
+                        </div>
+                        <p class="field-hint">Termos alternativos que melhoram o ranking da busca vetorial.</p>
+                    </div>
+
+                    <div id="form-error" class="form-error" hidden></div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="primary-link">Salvar documento</button>
+                        <button type="button" id="form-cancel" class="secondary-button">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="tab-export" class="tab-content" hidden>
+                <p class="export-instruction">
+                    Documento salvo localmente. Para fixar permanentemente, copie o objeto abaixo e adicione ao array em
+                    <code>documents.js</code>.
+                </p>
+                <div class="code-block-wrap">
+                    <button id="btn-copy-json" class="secondary-button copy-btn" type="button">Copiar</button>
+                    <pre id="export-code" class="code-block"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./documents.js"></script>
+    <script src="./app.js"></script>
+</body>
+</html>
