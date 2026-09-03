@@ -476,10 +476,15 @@
         if (tagsList.length === 0) { showError("Adicione ao menos uma tag.", el.fTagsInput); return; }
         if (!summary) { showError("O resumo e obrigatorio.", el.fSummary); return; }
         if (!sourceUrl) { showError("O link do documento e obrigatorio.", el.fUrl); return; }
-        var id = slugify(title) + "-" + Date.now();
-        var newDoc = { id: id, title: title, theme: theme, tags: tagsList, summary: summary, sourceUrl: sourceUrl, synonyms: synonymsList };
         var docs = storageApi.getDocs(state.activeProjectId);
-        docs.push(newDoc);
+        if (editingDocId) {
+            var index = docs.findIndex(function (d) { return d.id === editingDocId; });
+            var updatedDoc = { id: editingDocId, title: title, theme: theme, tags: tagsList, summary: summary, sourceUrl: sourceUrl, synonyms: synonymsList };
+            if (index === -1) { docs.push(updatedDoc); } else { docs[index] = updatedDoc; }
+        } else {
+            var id = slugify(title) + "-" + Date.now();
+            docs.push({ id: id, title: title, theme: theme, tags: tagsList, summary: summary, sourceUrl: sourceUrl, synonyms: synonymsList });
+        }
         storageApi.saveDocs(state.activeProjectId, docs);
         rebuildIndex(); render();
         closeModal();
