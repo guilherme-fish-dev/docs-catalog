@@ -1,7 +1,7 @@
 # Catálogo de Documentos — Design
 
 Data: 2026-09-03
-Status: Aprovado (aguardando plano de implementação)
+Status: Implementado (2026-09-03)
 
 ## Contexto
 
