@@ -446,6 +446,58 @@ h1 {
     background: var(--border);
 }
 
+.backup-status {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: default;
+}
+
+.backup-status.is-error {
+    cursor: pointer;
+}
+
+.backup-status.is-linked {
+    color: var(--accent);
+}
+
+.backup-status.is-error {
+    color: var(--danger);
+}
+
+/* ── Corruption banner ────────────────────────────────────────────────────── */
+
+.corruption-banner[hidden] {
+    display: none;
+}
+
+.corruption-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 18px 20px;
+    border: var(--border-w-thick) solid var(--danger);
+    border-radius: var(--radius);
+    background: var(--danger-bg);
+    color: var(--text);
+    box-shadow: var(--shadow-sm);
+}
+
+.corruption-banner p {
+    margin: 0;
+    max-width: 640px;
+    font-weight: 600;
+}
+
+.corruption-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
 /* ── FAB button ───────────────────────────────────────────────────────────── */
 
 .fab {

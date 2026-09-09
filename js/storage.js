@@ -115,6 +115,32 @@
             writeJson(storage, docsKey(projectId), docs);
         }
 
+        function getRawDocs(projectId) {
+            return storage.getItem(docsKey(projectId));
+        }
+
+        function isDocsCorrupted(projectId) {
+            var raw = storage.getItem(docsKey(projectId));
+            if (!raw) return false;
+            try {
+                JSON.parse(raw);
+                return false;
+            } catch (e) {
+                return true;
+            }
+        }
+
+        function isProjectsCorrupted() {
+            var raw = storage.getItem(PROJECTS_KEY);
+            if (!raw) return false;
+            try {
+                JSON.parse(raw);
+                return false;
+            } catch (e) {
+                return true;
+            }
+        }
+
         function ensureSeeded(seedProjects, legacySeedDocs) {
             var projects = getProjects();
             if (projects.length === 0 && seedProjects && seedProjects.length) {
@@ -142,6 +168,9 @@
             setActiveProjectId: setActiveProjectId,
             getDocs: getDocs,
             saveDocs: saveDocs,
+            getRawDocs: getRawDocs,
+            isDocsCorrupted: isDocsCorrupted,
+            isProjectsCorrupted: isProjectsCorrupted,
             ensureSeeded: ensureSeeded
         };
     }

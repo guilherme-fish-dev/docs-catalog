@@ -5,6 +5,9 @@
     var slugify = window.DocsCatalogStorage.slugify;
     var buildExportPayload = window.DocsCatalogImportExport.buildExportPayload;
     var applyImport = window.DocsCatalogImportExport.applyImport;
+    var buildFullSnapshot = window.DocsCatalogLocalBackup.buildFullSnapshot;
+    var restoreFullSnapshot = window.DocsCatalogLocalBackup.restoreFullSnapshot;
+    var isValidBackupSnapshot = window.DocsCatalogLocalBackup.isValidSnapshot;
 
     // Text / vector helpers (unchanged from the original prototype)
     var stopWords = new Set([
@@ -77,7 +80,8 @@
     var enriched = [], themes = [], tags = [];
 
     function rebuildIndex() {
-        var docs = state.activeProjectId ? storageApi.getDocs(state.activeProjectId) : [];
+        state.dataCorrupted = !!state.activeProjectId && storageApi.isDocsCorrupted(state.activeProjectId);
+        var docs = (state.activeProjectId && !state.dataCorrupted) ? storageApi.getDocs(state.activeProjectId) : [];
         if (!state.includeArchived) { docs = docs.filter(function (d) { return !d.archived; }); }
         enriched = docs.map(enrich);
         themes = Array.from(new Set(enriched.map(function (d) { return d.theme; }))).sort(function (a, b) { return a.localeCompare(b, "pt-BR"); });
@@ -85,7 +89,7 @@
     }
 
     // State
-    var state = { query: "", selectedTheme: null, selectedTags: new Set(), activeProjectId: null, includeArchived: false };
+    var state = { query: "", selectedTheme: null, selectedTags: new Set(), activeProjectId: null, includeArchived: false, dataCorrupted: false };
 
     // Elements
     var el = {
@@ -123,7 +127,15 @@
         formError: document.getElementById("form-error"),
         modalTitle: document.getElementById("modal-title"),
         formSubmit: document.querySelector("#doc-form button[type=\"submit\"]"),
-        includeArchived: document.getElementById("include-archived")
+        includeArchived: document.getElementById("include-archived"),
+        btnLinkExistingBackup: document.getElementById("btn-link-existing-backup"),
+        btnCreateBackup: document.getElementById("btn-create-backup"),
+        btnRestoreBackup: document.getElementById("btn-restore-backup"),
+        btnUnlinkBackup: document.getElementById("btn-unlink-backup"),
+        backupStatus: document.getElementById("backup-status"),
+        corruptionBanner: document.getElementById("corruption-banner"),
+        btnDownloadCorrupted: document.getElementById("btn-download-corrupted"),
+        btnDiscardCorrupted: document.getElementById("btn-discard-corrupted")
     };
 
     // Project registry UI
@@ -163,6 +175,7 @@
         var project = storageApi.createProject(label.trim());
         renderProjectSelect();
         switchToProject(project.id);
+        scheduleBackupWrite();
     }
 
     function handleRenameProject() {
@@ -172,6 +185,7 @@
         if (!label || !label.trim() || label.trim() === project.label) return;
         storageApi.renameProject(project.id, label.trim());
         renderProjectSelect();
+        scheduleBackupWrite();
     }
 
     function handleRemoveProject() {
@@ -183,6 +197,7 @@
         var nextId = storageApi.getActiveProjectId();
         renderProjectSelect();
         switchToProject(nextId);
+        scheduleBackupWrite();
     }
 
     function downloadJson(filename, payload) {
@@ -232,16 +247,34 @@
             } else {
                 actualProjectId = storageApi.createProject(payload.project.label || payload.project.id, payload.project.id).id;
             }
-            var merge = window.confirm("Mesclar com os documentos existentes do projeto?\nOK = mesclar (mantem os locais em caso de conflito de id)\nCancelar = substituir tudo pelo arquivo importado");
+            var wantsMerge = window.confirm(
+                "Importar \"" + payload.project.label + "\" (" + payload.documents.length + " documento(s)) mesclando com o que ja existe?\n\n" +
+                "OK = mesclar (mantem os documentos locais em caso de conflito de id)\n" +
+                "Cancelar = ver a opcao de substituir tudo"
+            );
+            var mode;
+            if (wantsMerge) {
+                mode = "merge";
+            } else {
+                var wantsReplace = window.confirm(
+                    "Tem certeza que quer SUBSTITUIR TODOS os documentos atuais do projeto \"" +
+                    (existingProject ? existingProject.label : payload.project.label) +
+                    "\" pelo conteudo deste arquivo?\n\n" +
+                    "Isso apaga os documentos atuais desse projeto e NAO pode ser desfeito."
+                );
+                if (!wantsReplace) return;
+                mode = "replace";
+            }
             var existingDocs = storageApi.getDocs(actualProjectId);
             var result;
             try {
-                result = applyImport(existingDocs, payload, merge ? "merge" : "replace");
+                result = applyImport(existingDocs, payload, mode);
             } catch (err) {
                 window.alert("Nao foi possivel importar: " + err.message);
                 return;
             }
             storageApi.saveDocs(actualProjectId, result.docs);
+            scheduleBackupWrite();
             if (result.conflicts.length) {
                 window.alert(result.conflicts.length + " documento(s) ignorado(s) por conflito de id: " + result.conflicts.join(", "));
             }
@@ -365,15 +398,49 @@
         if (!skipRender) render();
     }
 
+    function renderCorruptionBanner() {
+        el.corruptionBanner.hidden = !state.dataCorrupted;
+    }
+
     function render() {
-        renderProjectSelect(); renderThemes(); renderTags(); renderActiveFilters(); renderResults(); renderSearchHint();
+        renderProjectSelect(); renderThemes(); renderTags(); renderActiveFilters(); renderResults(); renderSearchHint(); renderCorruptionBanner();
+    }
+
+    function handleDownloadCorrupted() {
+        if (!state.activeProjectId) return;
+        var raw = storageApi.getRawDocs(state.activeProjectId);
+        if (!raw) return;
+        var blob = new Blob([raw], { type: "text/plain" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url; a.download = state.activeProjectId + "-dado-bruto-corrompido.txt";
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function handleDiscardCorrupted() {
+        if (!state.activeProjectId) return;
+        var confirmed = window.confirm(
+            "Isso apaga o dado corrompido deste projeto e comeca com uma lista vazia de documentos.\n" +
+            "Recomendado: baixe o dado bruto antes, caso queira tentar recuperar algo manualmente depois.\n\n" +
+            "Continuar?"
+        );
+        if (!confirmed) return;
+        storageApi.saveDocs(state.activeProjectId, []);
+        rebuildIndex(); render();
+        scheduleBackupWrite();
     }
 
     // Delete doc
     function deleteDocument(id) {
-        var docs = storageApi.getDocs(state.activeProjectId).filter(function (d) { return d.id !== id; });
-        storageApi.saveDocs(state.activeProjectId, docs);
+        var docs = storageApi.getDocs(state.activeProjectId);
+        var doc = docs.filter(function (d) { return d.id === id; })[0];
+        var label = doc ? doc.title : id;
+        var confirmed = window.confirm("Remover o documento \"" + label + "\"? Essa acao nao pode ser desfeita.");
+        if (!confirmed) return;
+        storageApi.saveDocs(state.activeProjectId, docs.filter(function (d) { return d.id !== id; }));
         rebuildIndex(); render();
+        scheduleBackupWrite();
     }
 
     // Archive doc
@@ -384,6 +451,7 @@
         doc.archived = !doc.archived;
         storageApi.saveDocs(state.activeProjectId, docs);
         rebuildIndex(); render();
+        scheduleBackupWrite();
     }
 
     // Modal (cadastro/edicao de documento)
@@ -502,6 +570,7 @@
         storageApi.saveDocs(state.activeProjectId, docs);
         rebuildIndex(); render();
         closeModal();
+        scheduleBackupWrite();
     });
 
     // Event listeners
@@ -527,6 +596,319 @@
     el.btnExportProject.addEventListener("click", handleExportProject);
     el.btnImportProject.addEventListener("click", handleImportProject);
     el.importFileInput.addEventListener("change", handleImportFileSelected);
+    el.btnDownloadCorrupted.addEventListener("click", handleDownloadCorrupted);
+    el.btnDiscardCorrupted.addEventListener("click", handleDiscardCorrupted);
+
+    // Backup automatico em arquivo local (File System Access API), fora do
+    // localStorage e fora do git. So funciona no Chrome/Edge desktop; em
+    // navegadores sem suporte (ex.: Samsung Internet, Chrome Android) os
+    // botoes ficam ocultos e o app segue funcionando so com localStorage +
+    // export/import manual.
+    var FS_ACCESS_SUPPORTED = typeof window.showSaveFilePicker === "function";
+    var backupHandle = null;
+    var backupWriteTimer = null;
+
+    function openHandleDb() {
+        return new Promise(function (resolve, reject) {
+            var req = indexedDB.open("docscat_backup", 1);
+            req.onupgradeneeded = function () { req.result.createObjectStore("handles"); };
+            req.onsuccess = function () { resolve(req.result); };
+            req.onerror = function () { reject(req.error); };
+        });
+    }
+
+    function idbGet(key) {
+        return openHandleDb().then(function (db) {
+            return new Promise(function (resolve, reject) {
+                var req = db.transaction("handles", "readonly").objectStore("handles").get(key);
+                req.onsuccess = function () { resolve(req.result || null); };
+                req.onerror = function () { reject(req.error); };
+            });
+        });
+    }
+
+    function idbSet(key, value) {
+        return openHandleDb().then(function (db) {
+            return new Promise(function (resolve, reject) {
+                var tx = db.transaction("handles", "readwrite");
+                tx.objectStore("handles").put(value, key);
+                tx.oncomplete = function () { resolve(); };
+                tx.onerror = function () { reject(tx.error); };
+            });
+        });
+    }
+
+    function idbDelete(key) {
+        return openHandleDb().then(function (db) {
+            return new Promise(function (resolve, reject) {
+                var tx = db.transaction("handles", "readwrite");
+                tx.objectStore("handles").delete(key);
+                tx.oncomplete = function () { resolve(); };
+                tx.onerror = function () { reject(tx.error); };
+            });
+        });
+    }
+
+    function setBackupStatus(text, kind) {
+        el.backupStatus.hidden = false;
+        el.backupStatus.textContent = text;
+        el.backupStatus.className = "backup-status" + (kind ? " is-" + kind : "");
+    }
+
+    function writeBackupNow() {
+        if (!backupHandle) return Promise.resolve();
+        return backupHandle.queryPermission({ mode: "readwrite" }).then(function (perm) {
+            if (perm !== "granted") {
+                setBackupStatus("Backup vinculado (" + backupHandle.name + "), mas sem permissao de escrita. Clique aqui para reconfirmar.", "error");
+                return;
+            }
+            var snapshot = buildFullSnapshot(storageApi);
+            return backupHandle.createWritable().then(function (writable) {
+                return writable.write(JSON.stringify(snapshot, null, 2)).then(function () { return writable.close(); });
+            }).then(function () {
+                setBackupStatus("Backup automatico: " + backupHandle.name + " (atualizado agora)", "linked");
+            });
+        }).catch(function (err) {
+            setBackupStatus("Erro ao gravar backup automatico: " + err.message, "error");
+        });
+    }
+
+    function scheduleBackupWrite() {
+        if (!FS_ACCESS_SUPPORTED || !backupHandle) return;
+        if (backupWriteTimer) clearTimeout(backupWriteTimer);
+        backupWriteTimer = setTimeout(writeBackupNow, 400);
+    }
+
+    function countSnapshotDocs(snapshot) {
+        return Object.keys(snapshot.docsByProject || {}).reduce(function (total, projectId) {
+            var docs = snapshot.docsByProject[projectId];
+            return total + (Array.isArray(docs) ? docs.length : 0);
+        }, 0);
+    }
+
+    // Aplica um snapshot na storageApi (sem pedir confirmacao — quem chama ja
+    // decidiu). Usado tanto pelo restore manual (que confirma antes) quanto
+    // pelo link a um arquivo de backup ja existente (que tem sua propria
+    // pergunta, mais especifica, antes de chegar aqui).
+    function performRestore(snapshot) {
+        var summary;
+        try {
+            summary = restoreFullSnapshot(storageApi, snapshot);
+        } catch (e) {
+            window.alert("Nao foi possivel restaurar: " + e.message);
+            return false;
+        }
+        window.alert("Restaurado: " + summary.projectsWritten + " projeto(s) novo(s), " + summary.docsWritten + " documento(s) no total.");
+        renderProjectSelect();
+        var nextId = storageApi.getActiveProjectId() || (storageApi.getProjects()[0] || {}).id || null;
+        switchToProject(nextId);
+        return true;
+    }
+
+    function applyRestoredSnapshot(snapshot) {
+        var confirmed = window.confirm(
+            "Isso vai sobrescrever os documentos dos projetos presentes no arquivo de backup com o conteudo dele.\n" +
+            "Projetos locais que nao estao no backup nao sao afetados.\n\nContinuar?"
+        );
+        if (!confirmed) return;
+        performRestore(snapshot);
+    }
+
+    // Decide se e seguro prosseguir com o link (e, se o usuario topar, ja traz
+    // o conteudo do arquivo pra este navegador). So retorna true sem perguntar
+    // nada quando o arquivo esta genuinamente vazio ou e um snapshot valido sem
+    // documentos — qualquer outra coisa (conteudo reconhecido com documentos,
+    // ou conteudo que nao reconhecemos) para e pergunta antes.
+    function evaluateExistingContentAndDecide(text) {
+        var trimmed = text ? String(text).trim() : "";
+        if (!trimmed) return true;
+
+        var existing = null;
+        try { existing = JSON.parse(trimmed); } catch (e) { existing = null; }
+        var isRecognized = !!existing && isValidBackupSnapshot(existing);
+        var docCount = isRecognized ? countSnapshotDocs(existing) : 0;
+
+        if (isRecognized && docCount === 0) return true;
+
+        if (isRecognized && docCount > 0) {
+            var bringIn = window.confirm(
+                "Esse arquivo ja tem um backup existente (" + docCount + " documento(s) em " +
+                existing.projects.length + " projeto(s)).\n\n" +
+                "OK = trazer esse conteudo para este navegador agora (recomendado ao vincular em outro navegador/computador)\n" +
+                "Cancelar = ver a opcao de manter os dados deste navegador"
+            );
+            if (bringIn) {
+                performRestore(existing);
+                return true;
+            }
+            return window.confirm(
+                "Tem certeza que quer MANTER OS DADOS DESTE NAVEGADOR e sobrescrever o arquivo de backup com eles?\n\n" +
+                "Isso APAGA o conteudo que ja existe no arquivo (" + docCount + " documento(s)) e nao pode ser desfeito."
+            ); // false = aborta o vinculo inteiro, sem gravar nada
+        }
+
+        // O arquivo tem conteudo, mas nao reconhecemos como um backup deste
+        // catalogo (JSON invalido, outro formato, versao diferente...). Nunca
+        // sobrescrever as cegas so porque nao conseguimos interpretar.
+        return window.confirm(
+            "O arquivo escolhido ja tem conteudo, mas nao no formato de backup esperado deste catalogo " +
+            "(pode ser outro arquivo, ou algo que nao conseguimos ler corretamente).\n\n" +
+            "Tem certeza que quer usar esse arquivo mesmo assim? A proxima gravacao automatica vai " +
+            "SOBRESCREVER o conteudo atual dele."
+        );
+    }
+
+    function readHandleTextOrFailureMarker(handle) {
+        var READ_FAILED = {};
+        return handle.getFile().then(function (file) { return file.text(); }).catch(function () { return READ_FAILED; });
+    }
+
+    function decideFromReadResult(result) {
+        if (result && typeof result === "object") {
+            // Nao conseguimos ler o arquivo pra checar se ja tinha algo. Nao
+            // arriscar sobrescrever as cegas.
+            return window.confirm(
+                "Nao foi possivel ler o conteudo atual do arquivo escolhido antes de vincular " +
+                "(pode ja ter dados que nao conseguimos verificar).\n\n" +
+                "Tem certeza que quer continuar? A proxima gravacao automatica vai SOBRESCREVER o " +
+                "conteudo atual dele, seja lá qual for."
+            );
+        }
+        return evaluateExistingContentAndDecide(result);
+    }
+
+    function finishLinking(handle) {
+        backupHandle = handle;
+        return idbSet("handle", handle).then(function () {
+            el.btnRestoreBackup.hidden = false;
+            el.btnUnlinkBackup.hidden = false;
+            return writeBackupNow();
+        });
+    }
+
+    function handleUnlinkBackup() {
+        if (!backupHandle) return;
+        var confirmed = window.confirm(
+            "Desvincular o backup automatico (" + backupHandle.name + ")?\n\n" +
+            "Isso so esquece o vinculo neste navegador — o arquivo em si nao e apagado nem alterado. " +
+            "Voce pode vincular de novo (a este ou a outro arquivo) quando quiser."
+        );
+        if (!confirmed) return;
+        backupHandle = null;
+        idbDelete("handle").then(function () {
+            el.btnRestoreBackup.hidden = true;
+            el.btnUnlinkBackup.hidden = true;
+            setBackupStatus("Sem backup automatico vinculado.", null);
+        }).catch(function (err) {
+            setBackupStatus("Nao foi possivel desvincular: " + err.message, "error");
+        });
+    }
+
+    // Vincular a um arquivo JA EXISTENTE: usa o dialogo de ABRIR (nunca cria
+    // nem sobrescreve o arquivo so por escolhe-lo — diferente do dialogo de
+    // "Salvar como", que em alguns navegadores/SOs pode criar/truncar o
+    // arquivo so de voce confirmar o nome, antes do nosso codigo rodar).
+    function handleLinkExistingBackup() {
+        if (!FS_ACCESS_SUPPORTED) return;
+        if (typeof window.showOpenFilePicker !== "function") {
+            setBackupStatus("Este navegador nao suporta abrir um arquivo existente. Use \"Criar novo backup\".", "error");
+            return;
+        }
+        var pickedHandle;
+        window.showOpenFilePicker({
+            multiple: false,
+            types: [{ description: "Backup JSON", accept: { "application/json": [".json"] } }]
+        }).then(function (handles) {
+            pickedHandle = handles[0];
+            return pickedHandle.requestPermission({ mode: "readwrite" });
+        }).then(function (perm) {
+            if (perm !== "granted") {
+                setBackupStatus("Permissao negada para o arquivo escolhido.", "error");
+                return;
+            }
+            return readHandleTextOrFailureMarker(pickedHandle).then(function (result) {
+                if (decideFromReadResult(result)) return finishLinking(pickedHandle);
+            });
+        }).catch(function (err) {
+            if (err && err.name === "AbortError") return;
+            setBackupStatus("Nao foi possivel abrir o arquivo de backup: " + err.message, "error");
+        });
+    }
+
+    // Criar um arquivo NOVO de backup (primeiro vinculo, quando ainda nao
+    // existe nenhum). Mantem a mesma checagem de seguranca como rede extra,
+    // caso alguem escolha aqui um arquivo que ja existia.
+    function handleCreateBackup() {
+        if (!FS_ACCESS_SUPPORTED) return;
+        var pickedHandle;
+        window.showSaveFilePicker({
+            suggestedName: "docscat-backup.local.json",
+            types: [{ description: "Backup JSON", accept: { "application/json": [".json"] } }]
+        }).then(function (handle) {
+            pickedHandle = handle;
+            return readHandleTextOrFailureMarker(handle);
+        }).then(function (result) {
+            if (decideFromReadResult(result)) return finishLinking(pickedHandle);
+        }).catch(function (err) {
+            if (err && err.name === "AbortError") return;
+            setBackupStatus("Nao foi possivel criar o arquivo de backup: " + err.message, "error");
+        });
+    }
+
+    function handleRestoreBackup() {
+        if (!backupHandle) return;
+        backupHandle.requestPermission({ mode: "readwrite" }).then(function (perm) {
+            if (perm !== "granted") {
+                setBackupStatus("Permissao de backup negada.", "error");
+                return;
+            }
+            return backupHandle.getFile().then(function (file) { return file.text(); }).then(function (text) {
+                var snapshot;
+                try {
+                    snapshot = JSON.parse(text);
+                } catch (e) {
+                    window.alert("O arquivo de backup nao e um JSON valido.");
+                    return;
+                }
+                applyRestoredSnapshot(snapshot);
+                setBackupStatus("Backup automatico: " + backupHandle.name + " (restaurado agora)", "linked");
+            });
+        }).catch(function (err) {
+            window.alert("Nao foi possivel ler o arquivo de backup: " + err.message);
+        });
+    }
+
+    function initBackupLink() {
+        if (!FS_ACCESS_SUPPORTED) return;
+        el.btnLinkExistingBackup.hidden = false;
+        el.btnCreateBackup.hidden = false;
+        idbGet("handle").then(function (handle) {
+            if (!handle) { setBackupStatus("Sem backup automatico vinculado.", null); return; }
+            backupHandle = handle;
+            el.btnRestoreBackup.hidden = false;
+            el.btnUnlinkBackup.hidden = false;
+            return handle.queryPermission({ mode: "readwrite" }).then(function (perm) {
+                if (perm === "granted") {
+                    setBackupStatus("Backup automatico vinculado: " + handle.name, "linked");
+                } else {
+                    setBackupStatus("Backup vinculado (" + handle.name + "). Clique aqui para reconfirmar a permissao.", "error");
+                }
+            });
+        }).catch(function () {
+            setBackupStatus("Sem backup automatico vinculado.", null);
+        });
+    }
+
+    el.btnLinkExistingBackup.addEventListener("click", handleLinkExistingBackup);
+    el.btnCreateBackup.addEventListener("click", handleCreateBackup);
+    el.btnRestoreBackup.addEventListener("click", handleRestoreBackup);
+    el.btnUnlinkBackup.addEventListener("click", handleUnlinkBackup);
+    el.backupStatus.addEventListener("click", function () {
+        if (!backupHandle) return;
+        backupHandle.requestPermission({ mode: "readwrite" }).then(function (perm) {
+            if (perm === "granted") { writeBackupNow(); } else { setBackupStatus("Permissao de backup negada.", "error"); }
+        });
+    });
 
     // Init
     var OLD_USER_DOCS_KEY = "glossary_user_documents";
@@ -564,4 +946,5 @@
     state.activeProjectId = storageApi.getActiveProjectId();
     rebuildIndex();
     render();
+    initBackupLink();
 })();

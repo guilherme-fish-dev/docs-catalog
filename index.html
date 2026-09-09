@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catalogo de Documentos</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='3' y='3' width='58' height='58' rx='14' fill='%23150b18' stroke='%23f4d35e' stroke-width='5'/%3E%3Cpath d='M20 14h16l8 8v28a2 2 0 0 1-2 2H20a2 2 0 0 1-2-2V16a2 2 0 0 1 2-2z' fill='%23f4d35e' stroke='%23150b18' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M36 14v8h8z' fill='%23150b18'/%3E%3Crect x='22' y='30' width='16' height='4' rx='1' fill='%23150b18'/%3E%3Crect x='22' y='38' width='16' height='4' rx='1' fill='%23150b18'/%3E%3Crect x='22' y='46' width='10' height='4' rx='1' fill='%23150b18'/%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@1,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
@@ -33,8 +34,25 @@
                 <button id="btn-export-project" class="secondary-button" type="button">Exportar JSON</button>
                 <button id="btn-import-project" class="secondary-button" type="button">Importar JSON</button>
                 <input id="import-file-input" type="file" accept="application/json" hidden>
+                <span class="project-bar-divider" aria-hidden="true"></span>
+                <button id="btn-link-existing-backup" class="secondary-button" type="button" hidden>Usar backup existente</button>
+                <button id="btn-create-backup" class="secondary-button" type="button" hidden>Criar novo backup</button>
+                <button id="btn-restore-backup" class="ghost-button" type="button" hidden>Restaurar do backup</button>
+                <button id="btn-unlink-backup" class="ghost-button" type="button" hidden>Desvincular</button>
+                <span id="backup-status" class="backup-status" hidden></span>
             </div>
         </section>
+
+        <div id="corruption-banner" class="corruption-banner" hidden>
+            <p>
+                Os documentos deste projeto estao gravados de forma corrompida no navegador e nao puderam ser lidos
+                (isso normalmente acontece se o navegador fechou no meio de uma gravacao). Nada foi apagado ainda.
+            </p>
+            <div class="corruption-actions">
+                <button id="btn-download-corrupted" class="secondary-button" type="button">Baixar dado bruto</button>
+                <button id="btn-discard-corrupted" class="danger-button" type="button">Descartar e comecar vazio</button>
+            </div>
+        </div>
 
         <main class="layout">
             <aside class="sidebar" aria-label="Filtros de navegacao">
@@ -144,6 +162,7 @@
 
     <script src="./js/storage.js"></script>
     <script src="./js/importExport.js"></script>
+    <script src="./js/localBackup.js"></script>
     <script src="./projects.config.js"></script>
     <script src="./documents.js"></script>
     <script src="./app.js"></script>

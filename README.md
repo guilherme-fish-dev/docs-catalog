@@ -65,7 +65,51 @@ arquivo de dados versionado. Cada projeto tem sua própria "gaveta":
 | `docscat_v1_docs_<projectId>` | Array de documentos daquele projeto |
 
 Isso significa: limpar os dados do navegador (ou usar uma aba anônima) apaga
-o catálogo daquela máquina. Exportar de vez em quando é o backup.
+o catálogo daquela máquina. **Cada navegador/app tem sua própria gaveta** —
+Chrome e Samsung Internet, por exemplo, nunca compartilham dados entre si,
+mesmo abrindo o mesmíssimo `index.html`. Exportar de vez em quando é o
+backup manual; veja "Backup automático em arquivo local" abaixo pra reduzir
+esse risco no Chrome/Edge desktop.
+
+### Backup automático em arquivo local
+
+Na barra de projeto, dois botões (só aparecem em navegadores com suporte à
+File System Access API — Chrome/Edge desktop; somem em navegadores mobile
+como Samsung Internet) deixam escolher um arquivo `.json` local (pode ficar
+numa pasta sincronizada por OneDrive/Drive/etc.) pra guardar o backup:
+
+- **Usar backup existente**: abre o diálogo de **abrir** arquivo (só leitura
+  — nunca cria nem sobrescreve nada só de você escolher o arquivo). Use esse
+  ao vincular um segundo navegador/computador a um backup que já existe. Se
+  o arquivo já tiver documentos, o app pergunta se quer trazer esse conteúdo
+  pra este navegador antes de continuar.
+- **Criar novo backup**: abre o diálogo de **salvar como**, pra quando você
+  ainda não tem nenhum arquivo de backup. Mantém a mesma checagem de
+  segurança como rede extra, caso você acabe escolhendo aí um arquivo que já
+  existia.
+
+A partir do vínculo, toda alteração nos documentos grava automaticamente um
+snapshot completo (todos os projetos) nesse arquivo — além do localStorage,
+sem passar pelo git (o nome sugerido, `docscat-backup.local.json`, já cai no
+padrão `*.local.json` do `.gitignore`).
+
+O botão **Restaurar do backup** lê esse arquivo e aplica o conteúdo de volta
+(pede confirmação antes, projetos locais que não estão no backup não são
+afetados) — é o caminho pra recuperar dados depois de uma limpeza de
+navegador, por exemplo. O botão **Desvincular** esquece o vínculo neste
+navegador (não apaga nem altera o arquivo em disco) — use pra trocar de
+arquivo de backup ou parar a gravação automática temporariamente.
+
+### Proteções contra perda acidental
+
+- Remover um documento ou importar substituindo tudo pede confirmação
+  explícita antes de apagar qualquer coisa; declinar as duas opções (mesclar
+  e substituir) durante uma importação cancela a importação inteira, sem
+  tocar nos dados locais.
+- Se o JSON gravado no `localStorage` de um projeto estiver corrompido (ex.:
+  o navegador fechou no meio de uma gravação), o app mostra um aviso em vez
+  de simplesmente exibir "0 documentos" — com opção de baixar o dado bruto
+  antes de descartar.
 
 ### Arquivos do projeto
 
@@ -79,6 +123,11 @@ o catálogo daquela máquina. Exportar de vez em quando é o backup.
   lógica de mesclar/substituir no import (incluindo validação básica de
   formato e detecção de `id` duplicado). Testado com
   `node tests/importExport.test.js`.
+- `js/localBackup.js` — módulo puro que monta/aplica o snapshot completo
+  (todos os projetos e documentos) usado pelo backup automático em arquivo
+  local. A parte que fala com a File System Access API (escolher arquivo,
+  gravar, pedir permissão) fica em `app.js`, por depender do navegador.
+  Testado com `node tests/localBackup.test.js`.
 - `projects.config.js` — projeto(s) padrão usados **só na primeira execução**,
   pra popular o catálogo vazio (hoje: um projeto genérico "Projeto 1"). Depois
   da primeira carga, toda alteração de projeto vive só no localStorage — esse
@@ -103,11 +152,13 @@ testes). Isso deixa o projeto inteiro aberto direto num navegador, sem
 ```bash
 node tests/storage.test.js
 node tests/importExport.test.js
+node tests/localBackup.test.js
 ```
 
 Cobrem: isolamento de dados entre projetos, criação/renomeação/remoção de
 projeto, migração idempotente (não duplica dado num segundo carregamento),
-export/import (merge, replace, conflito de `id`, doc inválido rejeitado).
+export/import (merge, replace, conflito de `id`, doc inválido rejeitado),
+montagem/restauração do snapshot completo do backup automático.
 `app.js`/`index.html`/`styles.css` não têm teste automatizado — são
 verificados manualmente no navegador (é puramente wiring de UI).
 
