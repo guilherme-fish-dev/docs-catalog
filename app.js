@@ -191,7 +191,7 @@
     function handleRemoveProject() {
         var project = getActiveProject();
         if (!project) return;
-        var confirmed = window.confirm("Remover o projeto \"" + project.label + "\" e todos os seus documentos? Essa acao nao pode ser desfeita.");
+        var confirmed = window.confirm("Remover o projeto \"" + project.label + "\" e todos os seus links? Essa acao nao pode ser desfeita.");
         if (!confirmed) return;
         storageApi.removeProject(project.id);
         var nextId = storageApi.getActiveProjectId();
@@ -248,8 +248,8 @@
                 actualProjectId = storageApi.createProject(payload.project.label || payload.project.id, payload.project.id).id;
             }
             var wantsMerge = window.confirm(
-                "Importar \"" + payload.project.label + "\" (" + payload.documents.length + " documento(s)) mesclando com o que ja existe?\n\n" +
-                "OK = mesclar (mantem os documentos locais em caso de conflito de id)\n" +
+                "Importar \"" + payload.project.label + "\" (" + payload.documents.length + " link(s)) mesclando com o que ja existe?\n\n" +
+                "OK = mesclar (mantem os links locais em caso de conflito de id)\n" +
                 "Cancelar = ver a opcao de substituir tudo"
             );
             var mode;
@@ -257,10 +257,10 @@
                 mode = "merge";
             } else {
                 var wantsReplace = window.confirm(
-                    "Tem certeza que quer SUBSTITUIR TODOS os documentos atuais do projeto \"" +
+                    "Tem certeza que quer SUBSTITUIR TODOS os links atuais do projeto \"" +
                     (existingProject ? existingProject.label : payload.project.label) +
                     "\" pelo conteudo deste arquivo?\n\n" +
-                    "Isso apaga os documentos atuais desse projeto e NAO pode ser desfeito."
+                    "Isso apaga os links atuais desse projeto e NAO pode ser desfeito."
                 );
                 if (!wantsReplace) return;
                 mode = "replace";
@@ -276,10 +276,10 @@
             storageApi.saveDocs(actualProjectId, result.docs);
             scheduleBackupWrite();
             if (result.conflicts.length) {
-                window.alert(result.conflicts.length + " documento(s) ignorado(s) por conflito de id: " + result.conflicts.join(", "));
+                window.alert(result.conflicts.length + " link(s) ignorado(s) por conflito de id: " + result.conflicts.join(", "));
             }
             if (result.rejected && result.rejected.length) {
-                window.alert(result.rejected.length + " documento(s) invalido(s) ignorado(s) na importacao.");
+                window.alert(result.rejected.length + " link(s) invalido(s) ignorado(s) na importacao.");
             }
             renderProjectSelect();
             switchToProject(actualProjectId);
@@ -347,7 +347,7 @@
         var tagsMarkup = doc.tags.map(function (t) { return '<span class="tag-pill">' + escapeHtml(t) + '</span>'; }).join("");
         var sourceUrl = String(doc.sourceUrl || "");
         var linkMarkup = SAFE_URL_SCHEME.test(sourceUrl)
-            ? '<a class="primary-link" href="' + escapeHtml(sourceUrl) + '" target="_blank" rel="noreferrer">Abrir documento</a>'
+            ? '<a class="primary-link" href="' + escapeHtml(sourceUrl) + '" target="_blank" rel="noreferrer">Abrir link</a>'
             : '<span class="primary-link">' + escapeHtml(sourceUrl) + '</span>';
         article.innerHTML = [
             '<div class="card-head">',
@@ -368,7 +368,7 @@
     function renderResults() {
         var filtered = filterDocuments();
         el.results.innerHTML = "";
-        el.resultsCount.textContent = filtered.length + " documento" + (filtered.length === 1 ? "" : "s");
+        el.resultsCount.textContent = filtered.length + " link" + (filtered.length === 1 ? "" : "s");
         if (!state.activeProjectId) {
             var noProject = document.createElement("div");
             noProject.className = "empty-state";
@@ -379,7 +379,7 @@
         if (filtered.length === 0) {
             var emptyDocs = document.createElement("div");
             emptyDocs.className = "empty-state";
-            emptyDocs.textContent = "Nenhum documento encontrado com os filtros atuais.";
+            emptyDocs.textContent = "Nenhum link encontrado com os filtros atuais.";
             el.results.appendChild(emptyDocs);
             return;
         }
@@ -388,7 +388,7 @@
 
     function renderSearchHint() {
         el.searchHint.textContent = state.query
-            ? "A ordenacao combina correspondencia textual e similaridade vetorial leve entre os termos pesquisados e os metadados do documento."
+            ? "A ordenacao combina correspondencia textual e similaridade entre os termos pesquisados e os metadados dos links."
             : "Digite para filtrar e ranquear os resultados.";
     }
 
@@ -421,7 +421,7 @@
     function handleDiscardCorrupted() {
         if (!state.activeProjectId) return;
         var confirmed = window.confirm(
-            "Isso apaga o dado corrompido deste projeto e comeca com uma lista vazia de documentos.\n" +
+            "Isso apaga o dado corrompido deste projeto e comeca com uma lista vazia de links.\n" +
             "Recomendado: baixe o dado bruto antes, caso queira tentar recuperar algo manualmente depois.\n\n" +
             "Continuar?"
         );
@@ -436,7 +436,7 @@
         var docs = storageApi.getDocs(state.activeProjectId);
         var doc = docs.filter(function (d) { return d.id === id; })[0];
         var label = doc ? doc.title : id;
-        var confirmed = window.confirm("Remover o documento \"" + label + "\"? Essa acao nao pode ser desfeita.");
+        var confirmed = window.confirm("Remover o link \"" + label + "\"? Essa acao nao pode ser desfeita.");
         if (!confirmed) return;
         storageApi.saveDocs(state.activeProjectId, docs.filter(function (d) { return d.id !== id; }));
         rebuildIndex(); render();
@@ -454,14 +454,14 @@
         scheduleBackupWrite();
     }
 
-    // Modal (cadastro/edicao de documento)
+    // Modal (cadastro/edicao de link)
     var formTags = new Set();
     var formSynonyms = new Set();
     var editingDocId = null;
 
     function setModalMode(isEditing) {
-        el.modalTitle.textContent = isEditing ? "Editar documento" : "Cadastrar documento";
-        el.formSubmit.textContent = isEditing ? "Salvar alteracoes" : "Salvar documento";
+        el.modalTitle.textContent = isEditing ? "Editar link" : "Adicionar link";
+        el.formSubmit.textContent = isEditing ? "Salvar alteracoes" : "Salvar link";
     }
 
     function openModal() {
@@ -556,7 +556,7 @@
         if (!theme) { showError("O tema e obrigatorio.", el.fTheme); return; }
         if (tagsList.length === 0) { showError("Adicione ao menos uma tag.", el.fTagsInput); return; }
         if (!summary) { showError("O resumo e obrigatorio.", el.fSummary); return; }
-        if (!sourceUrl) { showError("O link do documento e obrigatorio.", el.fUrl); return; }
+        if (!sourceUrl) { showError("A URL e obrigatoria.", el.fUrl); return; }
         var docs = storageApi.getDocs(state.activeProjectId);
         if (editingDocId) {
             var index = docs.findIndex(function (d) { return d.id === editingDocId; });
@@ -698,7 +698,7 @@
             window.alert("Nao foi possivel restaurar: " + e.message);
             return false;
         }
-        window.alert("Restaurado: " + summary.projectsWritten + " projeto(s) novo(s), " + summary.docsWritten + " documento(s) no total.");
+        window.alert("Restaurado: " + summary.projectsWritten + " projeto(s) novo(s), " + summary.docsWritten + " link(s) no total.");
         renderProjectSelect();
         var nextId = storageApi.getActiveProjectId() || (storageApi.getProjects()[0] || {}).id || null;
         switchToProject(nextId);
@@ -707,7 +707,7 @@
 
     function applyRestoredSnapshot(snapshot) {
         var confirmed = window.confirm(
-            "Isso vai sobrescrever os documentos dos projetos presentes no arquivo de backup com o conteudo dele.\n" +
+            "Isso vai sobrescrever os links dos projetos presentes no arquivo de backup com o conteudo dele.\n" +
             "Projetos locais que nao estao no backup nao sao afetados.\n\nContinuar?"
         );
         if (!confirmed) return;
@@ -717,7 +717,7 @@
     // Decide se e seguro prosseguir com o link (e, se o usuario topar, ja traz
     // o conteudo do arquivo pra este navegador). So retorna true sem perguntar
     // nada quando o arquivo esta genuinamente vazio ou e um snapshot valido sem
-    // documentos — qualquer outra coisa (conteudo reconhecido com documentos,
+    // links — qualquer outra coisa (conteudo reconhecido com links,
     // ou conteudo que nao reconhecemos) para e pergunta antes.
     function evaluateExistingContentAndDecide(text) {
         var trimmed = text ? String(text).trim() : "";
@@ -732,7 +732,7 @@
 
         if (isRecognized && docCount > 0) {
             var bringIn = window.confirm(
-                "Esse arquivo ja tem um backup existente (" + docCount + " documento(s) em " +
+                "Esse arquivo ja tem um backup existente (" + docCount + " link(s) em " +
                 existing.projects.length + " projeto(s)).\n\n" +
                 "OK = trazer esse conteudo para este navegador agora (recomendado ao vincular em outro navegador/computador)\n" +
                 "Cancelar = ver a opcao de manter os dados deste navegador"
@@ -743,7 +743,7 @@
             }
             return window.confirm(
                 "Tem certeza que quer MANTER OS DADOS DESTE NAVEGADOR e sobrescrever o arquivo de backup com eles?\n\n" +
-                "Isso APAGA o conteudo que ja existe no arquivo (" + docCount + " documento(s)) e nao pode ser desfeito."
+                "Isso APAGA o conteudo que ja existe no arquivo (" + docCount + " link(s)) e nao pode ser desfeito."
             ); // false = aborta o vinculo inteiro, sem gravar nada
         }
 

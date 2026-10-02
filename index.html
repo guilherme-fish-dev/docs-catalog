@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catalogo de Documentos</title>
+    <title>Link Catalog</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='3' y='3' width='58' height='58' rx='14' fill='%23150b18' stroke='%23f4d35e' stroke-width='5'/%3E%3Cpath d='M20 14h16l8 8v28a2 2 0 0 1-2 2H20a2 2 0 0 1-2-2V16a2 2 0 0 1 2-2z' fill='%23f4d35e' stroke='%23150b18' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M36 14v8h8z' fill='%23150b18'/%3E%3Crect x='22' y='30' width='16' height='4' rx='1' fill='%23150b18'/%3E%3Crect x='22' y='38' width='16' height='4' rx='1' fill='%23150b18'/%3E%3Crect x='22' y='46' width='10' height='4' rx='1' fill='%23150b18'/%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,10 +14,10 @@
     <div class="page-shell">
         <header class="hero">
             <p class="eyebrow">Portal interno</p>
-            <h1>Catalogo de documentos</h1>
+            <h1>Link Catalog</h1>
             <p class="hero-copy">
-                Navegue por tema, filtre por tags e pesquise por termos relacionados. A busca usa texto,
-                sinonimos e um ranking vetorial leve para ordenar melhor os resultados.
+                Uma awesome list para organizar links de qualquer tipo que voce adicionar. Navegue por tema,
+                filtre por tags e encontre recursos na sua colecao com a busca inteligente.
             </p>
         </header>
 
@@ -45,7 +45,7 @@
 
         <div id="corruption-banner" class="corruption-banner" hidden>
             <p>
-                Os documentos deste projeto estao gravados de forma corrompida no navegador e nao puderam ser lidos
+                Os links deste projeto estao gravados de forma corrompida no navegador e nao puderam ser lidos
                 (isso normalmente acontece se o navegador fechou no meio de uma gravacao). Nada foi apagado ainda.
             </p>
             <div class="corruption-actions">
@@ -88,7 +88,7 @@
                 <div class="content-topbar panel">
                     <div>
                         <p class="results-label">Resultados</p>
-                        <strong id="results-count">0 documentos</strong>
+                        <strong id="results-count">0 links</strong>
                     </div>
                     <button id="reset-filters" class="secondary-button" type="button">Resetar filtros</button>
                 </div>
@@ -99,14 +99,14 @@
         </main>
     </div>
 
-    <button id="btn-new-doc" class="fab" type="button" aria-label="Cadastrar novo documento">
-        <span aria-hidden="true">+</span> Cadastrar
+    <button id="btn-new-doc" class="fab" type="button" aria-label="Adicionar novo link">
+        <span aria-hidden="true">+</span> Adicionar link
     </button>
 
     <div id="modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title" hidden>
         <div class="modal-panel">
             <div class="modal-header">
-                <h2 id="modal-title" class="modal-title">Cadastrar documento</h2>
+                <h2 id="modal-title" class="modal-title">Adicionar link</h2>
                 <button id="modal-close" class="icon-button" type="button" aria-label="Fechar">&#x2715;</button>
             </div>
 
@@ -114,7 +114,7 @@
                 <form id="doc-form" novalidate autocomplete="off">
                     <div class="form-field">
                         <label for="f-title">Titulo *</label>
-                        <input id="f-title" type="text" required placeholder="Nome descritivo do documento">
+                        <input id="f-title" type="text" required placeholder="Nome do site, recurso ou conteúdo">
                     </div>
 
                     <div class="form-field">
@@ -133,11 +133,11 @@
 
                     <div class="form-field">
                         <label for="f-summary">Resumo *</label>
-                        <textarea id="f-summary" rows="3" required placeholder="Breve descricao do que este documento cobre"></textarea>
+                        <textarea id="f-summary" rows="3" required placeholder="O que torna este link útil?"></textarea>
                     </div>
 
                     <div class="form-field">
-                        <label for="f-url">Link do documento *</label>
+                        <label for="f-url">URL *</label>
                         <input id="f-url" type="url" required placeholder="https://...">
                     </div>
 
@@ -152,7 +152,7 @@
                     <div id="form-error" class="form-error" hidden></div>
 
                     <div class="form-actions">
-                        <button type="submit" class="primary-link">Salvar documento</button>
+                        <button type="submit" class="primary-link">Salvar link</button>
                         <button type="button" id="form-cancel" class="secondary-button">Cancelar</button>
                     </div>
                 </form>
