@@ -1,7 +1,7 @@
-# Catálogo de Documentos
+# Link Catalog
 
-Catálogo local de links de documentos (Drive, Confluence, o que for), organizado
-por **projeto**, com busca por texto/tags/tema e sincronização manual entre
+Catálogo local de links de qualquer tipo (sites, ferramentas, artigos, vídeos,
+documentação e outros recursos), organizado por **projeto**, com busca por texto/tags/tema e sincronização manual entre
 máquinas via export/import de JSON. Sem backend, sem build, sem nuvem — é só
 HTML/CSS/JS aberto direto no navegador.
 
@@ -16,29 +16,29 @@ terminal). Também funciona servido por qualquer servidor estático simples
 ### Navegar entre projetos
 
 No topo da página tem um seletor **Projeto**. Cada projeto é um catálogo
-isolado — documentos de um projeto nunca aparecem em outro.
+isolado — os links de um projeto nunca aparecem em outro.
 
 - **+ Novo projeto**: cria um projeto vazio, pede só o nome.
 - **Renomear**: muda o nome do projeto ativo (o id interno não muda).
-- **Remover**: apaga o projeto ativo e todos os seus documentos. Pede
+- **Remover**: apaga o projeto ativo e todos os seus links. Pede
   confirmação — não tem desfazer.
 
-### Cadastrar, buscar e remover documentos
+### Adicionar, buscar e remover links
 
-- **+ Cadastrar** (canto inferior direito): abre o formulário — título, tema,
-  tags, resumo e o link do documento. Tags e sinônimos são digitados e
+- **+ Adicionar link** (canto inferior direito): abre o formulário — título, tema,
+  tags, resumo e URL. Tags e sinônimos são digitados e
   confirmados com Enter ou vírgula.
 - A busca (barra lateral) filtra por texto, tema e tags ao mesmo tempo,
   combinando correspondência textual com um ranking leve baseado nos termos
   cadastrados (título, tema, tags, resumo, sinônimos).
-- Todo documento tem um botão **Remover** no próprio card.
+- Todo link tem um botão **Remover** no próprio card.
 
 ### Sincronizar entre dois computadores
 
 Não tem nuvem nem conta envolvida — a sincronização é manual, por arquivo:
 
 1. No projeto que quer levar, clique em **Exportar JSON** — baixa um arquivo
-   `<projeto>-export-<data>.json` com todos os documentos daquele projeto.
+   `<projeto>-export-<data>.json` com todos os links daquele projeto.
 2. Leve esse arquivo pro outro computador do jeito que preferir (pendrive,
    e-mail pra você mesmo, etc.).
 3. No outro computador, abra o catálogo e clique em **Importar JSON**,
@@ -46,9 +46,9 @@ Não tem nuvem nem conta envolvida — a sincronização é manual, por arquivo:
    automaticamente com o mesmo nome.
 4. Você escolhe entre:
    - **Mesclar**: mantém o que já existe localmente e só adiciona os
-     documentos novos do arquivo. Se um `id` já existir dos dois lados, o
-     documento local é mantido (o do arquivo é ignorado e reportado).
-   - **Substituir**: apaga os documentos atuais do projeto e usa só o que
+     links novos do arquivo. Se um `id` já existir dos dois lados, o
+     link local é mantido (o do arquivo é ignorado e reportado).
+   - **Substituir**: apaga os links atuais do projeto e usa só o que
      veio no arquivo.
 
 ## Como funciona
@@ -62,7 +62,7 @@ arquivo de dados versionado. Cada projeto tem sua própria "gaveta":
 |---|---|
 | `docscat_v1_projects` | Lista de projetos: `[{id, label}]` |
 | `docscat_v1_active_project` | Id do projeto selecionado no momento |
-| `docscat_v1_docs_<projectId>` | Array de documentos daquele projeto |
+| `docscat_v1_docs_<projectId>` | Array de links daquele projeto |
 
 Isso significa: limpar os dados do navegador (ou usar uma aba anônima) apaga
 o catálogo daquela máquina. **Cada navegador/app tem sua própria gaveta** —
@@ -81,14 +81,14 @@ numa pasta sincronizada por OneDrive/Drive/etc.) pra guardar o backup:
 - **Usar backup existente**: abre o diálogo de **abrir** arquivo (só leitura
   — nunca cria nem sobrescreve nada só de você escolher o arquivo). Use esse
   ao vincular um segundo navegador/computador a um backup que já existe. Se
-  o arquivo já tiver documentos, o app pergunta se quer trazer esse conteúdo
+  o arquivo já tiver links, o app pergunta se quer trazer esse conteúdo
   pra este navegador antes de continuar.
 - **Criar novo backup**: abre o diálogo de **salvar como**, pra quando você
   ainda não tem nenhum arquivo de backup. Mantém a mesma checagem de
   segurança como rede extra, caso você acabe escolhendo aí um arquivo que já
   existia.
 
-A partir do vínculo, toda alteração nos documentos grava automaticamente um
+A partir do vínculo, toda alteração nos links grava automaticamente um
 snapshot completo (todos os projetos) nesse arquivo — além do localStorage,
 sem passar pelo git (o nome sugerido, `docscat-backup.local.json`, já cai no
 padrão `*.local.json` do `.gitignore`).
@@ -102,13 +102,13 @@ arquivo de backup ou parar a gravação automática temporariamente.
 
 ### Proteções contra perda acidental
 
-- Remover um documento ou importar substituindo tudo pede confirmação
+- Remover um link ou importar substituindo tudo pede confirmação
   explícita antes de apagar qualquer coisa; declinar as duas opções (mesclar
   e substituir) durante uma importação cancela a importação inteira, sem
   tocar nos dados locais.
 - Se o JSON gravado no `localStorage` de um projeto estiver corrompido (ex.:
   o navegador fechou no meio de uma gravação), o app mostra um aviso em vez
-  de simplesmente exibir "0 documentos" — com opção de baixar o dado bruto
+  de simplesmente exibir "0 links" — com opção de baixar o dado bruto
   antes de descartar.
 
 ### Arquivos do projeto
@@ -117,14 +117,14 @@ arquivo de backup ou parar a gravação automática temporariamente.
 - `app.js` — toda a lógica de UI: renderização, busca/ranking, formulário de
   cadastro, seletor de projeto, export/import.
 - `js/storage.js` — módulo puro (sem DOM) que fala com o `localStorage`:
-  criar/renomear/remover projeto, ler/gravar documentos por projeto, migração
+  criar/renomear/remover projeto, ler/gravar links por projeto, migração
   inicial. Testado com `node tests/storage.test.js`.
 - `js/importExport.js` — módulo puro que monta o JSON de export e aplica a
   lógica de mesclar/substituir no import (incluindo validação básica de
   formato e detecção de `id` duplicado). Testado com
   `node tests/importExport.test.js`.
 - `js/localBackup.js` — módulo puro que monta/aplica o snapshot completo
-  (todos os projetos e documentos) usado pelo backup automático em arquivo
+  (todos os projetos e links) usado pelo backup automático em arquivo
   local. A parte que fala com a File System Access API (escolher arquivo,
   gravar, pedir permissão) fica em `app.js`, por depender do navegador.
   Testado com `node tests/localBackup.test.js`.
@@ -133,7 +133,7 @@ arquivo de backup ou parar a gravação automática temporariamente.
   da primeira carga, toda alteração de projeto vive só no localStorage — esse
   arquivo não é mais lido.
 - `documents.js` — **arquivo local, fora do git** (veja `.gitignore`). Serve
-  só como fonte de migração única: se você já tinha documentos cadastrados
+  só como fonte de migração única: se você já tinha links cadastrados
   no protótipo antigo (versão anterior desta ferramenta, de projeto único),
   eles são lidos daqui uma vez e movidos pro localStorage. Depois disso o
   arquivo não é mais necessário — pode inclusive não existir (num clone novo,
@@ -164,7 +164,7 @@ verificados manualmente no navegador (é puramente wiring de UI).
 
 ## Privacidade
 
-Nenhum dado de documento (título, resumo, link) sai da sua máquina — tudo
+Nenhum dado dos links (título, resumo, URL) sai da sua máquina — tudo
 fica no localStorage local. O único conteúdo versionado neste repositório é
-o **código** da ferramenta; nomes de projeto reais e links de documentos
+o **código** da ferramenta; nomes de projeto reais e links cadastrados
 ficam de fora do git por design (veja `.gitignore` e `documents.js`).
