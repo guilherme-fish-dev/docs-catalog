@@ -1,153 +1,58 @@
 # Link Catalog
 
-Catálogo local de links de qualquer tipo (sites, ferramentas, artigos, vídeos,
-documentação e outros recursos), organizado por **projeto**, com busca por texto/tags/tema e sincronização manual entre
-máquinas via export/import de JSON. Sem backend, sem build, sem nuvem — é só
-HTML/CSS/JS aberto direto no navegador.
+Uma awesome list pessoal para organizar **os links que você escolher adicionar**. Guarde sites, ferramentas, artigos, vídeos, referências e qualquer outro recurso em coleções separadas por projeto.
 
-## Como usar
+O catálogo funciona localmente no navegador: não tem conta, backend ou serviço de descoberta de links. Você adiciona os endereços; o Link Catalog ajuda a organizar e encontrar o que já está na sua coleção.
 
-### Abrir
+## Começar
 
-Abra `index.html` direto no navegador (duplo clique, ou `start index.html` no
-terminal). Também funciona servido por qualquer servidor estático simples
-(`npx serve .`, `python -m http.server`, etc.) se preferir.
+Abra `index.html` no navegador. Se preferir, sirva a pasta com qualquer servidor estático, como `npx serve .` ou `python -m http.server`.
 
-### Navegar entre projetos
+### Organizar por projeto
 
-No topo da página tem um seletor **Projeto**. Cada projeto é um catálogo
-isolado — os links de um projeto nunca aparecem em outro.
+Cada projeto mantém sua própria coleção de links. Use o seletor **Projeto** para trocar de coleção.
 
-- **+ Novo projeto**: cria um projeto vazio, pede só o nome.
-- **Renomear**: muda o nome do projeto ativo (o id interno não muda).
-- **Remover**: apaga o projeto ativo e todos os seus links. Pede
-  confirmação — não tem desfazer.
+- **+ Novo projeto** cria uma coleção vazia.
+- **Renomear** altera o nome do projeto ativo.
+- **Remover** apaga o projeto e todos os links dele, após confirmação.
 
-### Adicionar, buscar e remover links
+### Adicionar e encontrar links
 
-- **+ Adicionar link** (canto inferior direito): abre o formulário — título, tema,
-  tags, resumo e URL. Tags e sinônimos são digitados e
-  confirmados com Enter ou vírgula.
-- A busca (barra lateral) filtra por texto, tema e tags ao mesmo tempo,
-  combinando correspondência textual com um ranking leve baseado nos termos
-  cadastrados (título, tema, tags, resumo, sinônimos).
-- Todo link tem um botão **Remover** no próprio card.
+Clique em **Adicionar link** e preencha título, tema, tags, resumo e URL. Sinônimos são opcionais e ajudam a busca a encontrar um link com termos relacionados. Pressione Enter ou vírgula para confirmar cada tag ou sinônimo.
 
-### Sincronizar entre dois computadores
+Use a busca e os filtros de tema e tags para localizar itens da coleção atual. Cada card permite abrir, editar ou remover um link.
 
-Não tem nuvem nem conta envolvida — a sincronização é manual, por arquivo:
+## Levar os dados para outro navegador ou computador
 
-1. No projeto que quer levar, clique em **Exportar JSON** — baixa um arquivo
-   `<projeto>-export-<data>.json` com todos os links daquele projeto.
-2. Leve esse arquivo pro outro computador do jeito que preferir (pendrive,
-   e-mail pra você mesmo, etc.).
-3. No outro computador, abra o catálogo e clique em **Importar JSON**,
-   escolha o arquivo. Se o projeto ainda não existir lá, ele é criado
-   automaticamente com o mesmo nome.
-4. Você escolhe entre:
-   - **Mesclar**: mantém o que já existe localmente e só adiciona os
-     links novos do arquivo. Se um `id` já existir dos dois lados, o
-     link local é mantido (o do arquivo é ignorado e reportado).
-   - **Substituir**: apaga os links atuais do projeto e usa só o que
-     veio no arquivo.
+Os dados ficam neste navegador. Para transferir uma coleção manualmente:
 
-## Como funciona
+1. No projeto desejado, clique em **Exportar JSON**.
+2. Leve o arquivo exportado para o outro computador.
+3. Abra o Link Catalog e clique em **Importar JSON**.
+4. Escolha se quer **mesclar** os links com o projeto existente ou **substituir** o conteúdo desse projeto.
 
-### Onde o dado mora
+Ao mesclar, os links que já têm o mesmo ID local são preservados. Ao substituir, os links atuais daquele projeto são apagados e trocados pelos do arquivo. Ambas as opções informam o que será feito antes de aplicar alterações.
 
-Tudo fica no **localStorage do navegador** — não existe backend, não existe
-arquivo de dados versionado. Cada projeto tem sua própria "gaveta":
+### Backup local automático
 
-| Chave no localStorage | Conteúdo |
-|---|---|
-| `docscat_v1_projects` | Lista de projetos: `[{id, label}]` |
-| `docscat_v1_active_project` | Id do projeto selecionado no momento |
-| `docscat_v1_docs_<projectId>` | Array de links daquele projeto |
+Chrome e Edge para computador permitem vincular um arquivo JSON local como backup automático. O arquivo pode estar em uma pasta sincronizada por outro serviço, se você quiser. Depois de vinculado, mudanças no catálogo salvam um snapshot de todos os projetos nesse arquivo.
 
-Isso significa: limpar os dados do navegador (ou usar uma aba anônima) apaga
-o catálogo daquela máquina. **Cada navegador/app tem sua própria gaveta** —
-Chrome e Samsung Internet, por exemplo, nunca compartilham dados entre si,
-mesmo abrindo o mesmíssimo `index.html`. Exportar de vez em quando é o
-backup manual; veja "Backup automático em arquivo local" abaixo pra reduzir
-esse risco no Chrome/Edge desktop.
+- **Usar backup existente** vincula um arquivo que já existe e permite importar o conteúdo dele para este navegador.
+- **Criar novo backup** escolhe onde criar o arquivo.
+- **Restaurar do backup** aplica o snapshot ao navegador após confirmação.
+- **Desvincular** encerra o vínculo sem apagar nem alterar o arquivo.
 
-### Backup automático em arquivo local
+Esse recurso depende da File System Access API e pode não aparecer em navegadores sem suporte, incluindo navegadores móveis.
 
-Na barra de projeto, dois botões (só aparecem em navegadores com suporte à
-File System Access API — Chrome/Edge desktop; somem em navegadores mobile
-como Samsung Internet) deixam escolher um arquivo `.json` local (pode ficar
-numa pasta sincronizada por OneDrive/Drive/etc.) pra guardar o backup:
+## Onde os dados ficam
 
-- **Usar backup existente**: abre o diálogo de **abrir** arquivo (só leitura
-  — nunca cria nem sobrescreve nada só de você escolher o arquivo). Use esse
-  ao vincular um segundo navegador/computador a um backup que já existe. Se
-  o arquivo já tiver links, o app pergunta se quer trazer esse conteúdo
-  pra este navegador antes de continuar.
-- **Criar novo backup**: abre o diálogo de **salvar como**, pra quando você
-  ainda não tem nenhum arquivo de backup. Mantém a mesma checagem de
-  segurança como rede extra, caso você acabe escolhendo aí um arquivo que já
-  existia.
+O catálogo usa o `localStorage` do navegador e não envia títulos, resumos ou URLs para um backend. Cada navegador mantém seus próprios dados; limpar os dados do navegador também remove a coleção local. Exporte ou vincule um backup para manter uma cópia.
 
-A partir do vínculo, toda alteração nos links grava automaticamente um
-snapshot completo (todos os projetos) nesse arquivo — além do localStorage,
-sem passar pelo git (o nome sugerido, `docscat-backup.local.json`, já cai no
-padrão `*.local.json` do `.gitignore`).
+Os dados das coleções não são versionados neste repositório. O arquivo local `documents.js`, quando presente, é usado apenas para migrar dados do protótipo antigo uma única vez e está fora do Git.
 
-O botão **Restaurar do backup** lê esse arquivo e aplica o conteúdo de volta
-(pede confirmação antes, projetos locais que não estão no backup não são
-afetados) — é o caminho pra recuperar dados depois de uma limpeza de
-navegador, por exemplo. O botão **Desvincular** esquece o vínculo neste
-navegador (não apaga nem altera o arquivo em disco) — use pra trocar de
-arquivo de backup ou parar a gravação automática temporariamente.
+## Desenvolvimento
 
-### Proteções contra perda acidental
-
-- Remover um link ou importar substituindo tudo pede confirmação
-  explícita antes de apagar qualquer coisa; declinar as duas opções (mesclar
-  e substituir) durante uma importação cancela a importação inteira, sem
-  tocar nos dados locais.
-- Se o JSON gravado no `localStorage` de um projeto estiver corrompido (ex.:
-  o navegador fechou no meio de uma gravação), o app mostra um aviso em vez
-  de simplesmente exibir "0 links" — com opção de baixar o dado bruto
-  antes de descartar.
-
-### Arquivos do projeto
-
-- `index.html` / `styles.css` — estrutura e visual da página.
-- `app.js` — toda a lógica de UI: renderização, busca/ranking, formulário de
-  cadastro, seletor de projeto, export/import.
-- `js/storage.js` — módulo puro (sem DOM) que fala com o `localStorage`:
-  criar/renomear/remover projeto, ler/gravar links por projeto, migração
-  inicial. Testado com `node tests/storage.test.js`.
-- `js/importExport.js` — módulo puro que monta o JSON de export e aplica a
-  lógica de mesclar/substituir no import (incluindo validação básica de
-  formato e detecção de `id` duplicado). Testado com
-  `node tests/importExport.test.js`.
-- `js/localBackup.js` — módulo puro que monta/aplica o snapshot completo
-  (todos os projetos e links) usado pelo backup automático em arquivo
-  local. A parte que fala com a File System Access API (escolher arquivo,
-  gravar, pedir permissão) fica em `app.js`, por depender do navegador.
-  Testado com `node tests/localBackup.test.js`.
-- `projects.config.js` — projeto(s) padrão usados **só na primeira execução**,
-  pra popular o catálogo vazio (hoje: um projeto genérico "Projeto 1"). Depois
-  da primeira carga, toda alteração de projeto vive só no localStorage — esse
-  arquivo não é mais lido.
-- `documents.js` — **arquivo local, fora do git** (veja `.gitignore`). Serve
-  só como fonte de migração única: se você já tinha links cadastrados
-  no protótipo antigo (versão anterior desta ferramenta, de projeto único),
-  eles são lidos daqui uma vez e movidos pro localStorage. Depois disso o
-  arquivo não é mais necessário — pode inclusive não existir (num clone novo,
-  por exemplo) que a ferramenta funciona normalmente, só sem esse seed extra.
-
-### Por que nada disso pede build ou servidor
-
-Todo módulo é um `<script>` clássico (sem `import`/`export` de ES Modules),
-com um wrapper que expõe tanto `window.NomeDoModulo` (pro navegador, via
-`file://` ou servidor) quanto `module.exports` (pro Node, usado só pelos
-testes). Isso deixa o projeto inteiro aberto direto num navegador, sem
-`npm install`, sem bundler.
-
-### Rodando os testes
+O projeto é HTML, CSS e JavaScript sem etapa de build ou instalação de dependências. Para rodar os testes dos módulos:
 
 ```bash
 node tests/storage.test.js
@@ -155,16 +60,4 @@ node tests/importExport.test.js
 node tests/localBackup.test.js
 ```
 
-Cobrem: isolamento de dados entre projetos, criação/renomeação/remoção de
-projeto, migração idempotente (não duplica dado num segundo carregamento),
-export/import (merge, replace, conflito de `id`, doc inválido rejeitado),
-montagem/restauração do snapshot completo do backup automático.
-`app.js`/`index.html`/`styles.css` não têm teste automatizado — são
-verificados manualmente no navegador (é puramente wiring de UI).
-
-## Privacidade
-
-Nenhum dado dos links (título, resumo, URL) sai da sua máquina — tudo
-fica no localStorage local. O único conteúdo versionado neste repositório é
-o **código** da ferramenta; nomes de projeto reais e links cadastrados
-ficam de fora do git por design (veja `.gitignore` e `documents.js`).
+Os testes cobrem armazenamento por projeto, migração, importação/exportação e snapshots de backup. A interface em `index.html`, `app.js` e `styles.css` é verificada manualmente.
